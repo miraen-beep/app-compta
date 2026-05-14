@@ -6,743 +6,1152 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinFlow">
-<title>FinFlow — Gestion financière</title>
+<title>FinFlow</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap');
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
-  :root {
-    --green: #1D9E75;
-    --green-light: #E1F5EE;
-    --green-dark: #085041;
-    --red: #E24B4A;
-    --red-light: #FCEBEB;
-    --amber: #EF9F27;
-    --amber-light: #FAEEDA;
-    --blue: #378ADD;
-    --blue-light: #E6F1FB;
-    --bg: #F7F6F2;
-    --card: #FFFFFF;
-    --text: #1a1a18;
-    --muted: #888780;
-    --border: rgba(0,0,0,0.08);
-    --radius: 16px;
-    --radius-sm: 10px;
-  }
+:root{
+  --bg:#0F0F0E;
+  --surface:#1A1A18;
+  --surface2:#232320;
+  --surface3:#2A2A27;
+  --border:rgba(255,255,255,0.07);
+  --border2:rgba(255,255,255,0.12);
+  --text:#F0EFE8;
+  --muted:#7A7A72;
+  --muted2:#9A9A90;
+  --green:#2ECC8F;
+  --green-bg:rgba(46,204,143,0.12);
+  --red:#FF5C5C;
+  --red-bg:rgba(255,92,92,0.12);
+  --amber:#F5A623;
+  --amber-bg:rgba(245,166,35,0.12);
+  --blue:#4A9EFF;
+  --blue-bg:rgba(74,158,255,0.12);
+  --accent:#C8F060;
+  --accent-dim:rgba(200,240,96,0.15);
+  --radius:18px;
+  --radius-sm:12px;
+  --radius-xs:8px;
+  --nav-h:72px;
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    max-width: 430px;
-    margin: 0 auto;
-    overflow-x: hidden;
-    -webkit-font-smoothing: antialiased;
-  }
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:'DM Sans',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
 
-  /* ── TOP BAR ── */
-  .topbar {
-    background: var(--text);
-    color: #fff;
-    padding: 52px 20px 20px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-  .topbar-row { display: flex; justify-content: space-between; align-items: center; }
-  .app-name { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.5px; }
-  .project-pill {
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.2);
-    border-radius: 20px;
-    padding: 6px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    display: flex; align-items: center; gap: 6px;
-    white-space: nowrap;
-    max-width: 160px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .balance-section { margin-top: 20px; }
-  .balance-label { font-size: 12px; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; text-transform: uppercase; }
-  .balance-amount { font-family: 'DM Serif Display', serif; font-size: 42px; letter-spacing: -1px; margin-top: 2px; }
-  .balance-amount.neg { color: #F09595; }
-  .balance-amount.pos { color: #9FE1CB; }
-  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
-  .stat-box {
-    background: rgba(255,255,255,0.08);
-    border-radius: var(--radius-sm);
-    padding: 10px 12px;
-    display: flex; align-items: center; gap: 8px;
-  }
-  .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-  .stat-dot.in { background: #9FE1CB; }
-  .stat-dot.out { background: #F09595; }
-  .stat-info { min-width: 0; }
-  .stat-label { font-size: 11px; color: rgba(255,255,255,0.5); }
-  .stat-val { font-size: 15px; font-weight: 500; color: #fff; }
+/* ── SWIPE WRAPPER ── */
+#pages-wrapper{
+  display:flex;width:500%;height:100%;
+  transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  will-change:transform;
+}
+.page{width:20%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px)}
 
-  /* ── NAV TABS ── */
-  .nav-tabs {
-    display: flex;
-    background: var(--card);
-    border-bottom: 1px solid var(--border);
-    position: sticky;
-    top: 218px;
-    z-index: 90;
-  }
-  .tab {
-    flex: 1; padding: 12px 0; text-align: center;
-    font-size: 13px; font-weight: 500; color: var(--muted);
-    cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all 0.2s;
-  }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+/* ── BOTTOM NAV ── */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--nav-h) + var(--safe-bottom));
+  background:rgba(15,15,14,0.92);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-top:1px solid var(--border);
+  display:flex;align-items:flex-start;padding-top:10px;
+  z-index:200;
+}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;transition:opacity .15s}
+.nav-item:active{opacity:.6}
+.nav-icon{font-size:22px;line-height:1;transition:transform .2s}
+.nav-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
+.nav-item.active .nav-label{color:var(--accent)}
+.nav-item.active .nav-icon{transform:scale(1.1)}
 
-  /* ── CONTENT ── */
-  .content { padding: 16px; padding-bottom: 100px; }
+/* ── FAB ── */
+.fab-wrap{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);right:16px;
+  display:flex;flex-direction:column;gap:8px;align-items:flex-end;z-index:190;
+}
+.fab-main{
+  width:56px;height:56px;border-radius:28px;
+  background:var(--accent);color:#0F0F0E;
+  border:none;font-size:26px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:transform .15s,box-shadow .15s;
+  box-shadow:0 4px 20px rgba(200,240,96,0.35);
+}
+.fab-main:active{transform:scale(0.93)}
+.fab-mini{
+  display:flex;align-items:center;gap:10px;
+  background:var(--surface2);border:1px solid var(--border2);
+  border-radius:28px;padding:10px 16px 10px 12px;
+  font-size:13px;font-weight:500;color:var(--text);
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.fab-mini:active{transform:scale(0.96)}
+.fab-mini-icon{font-size:18px}
+#fab-menu{display:none;flex-direction:column;gap:8px;align-items:flex-end}
+#fab-menu.open{display:flex}
 
-  /* ── CARDS ── */
-  .card {
-    background: var(--card);
-    border-radius: var(--radius);
-    border: 1px solid var(--border);
-    padding: 16px;
-    margin-bottom: 10px;
-  }
+/* ── PAGE HEADER ── */
+.page-header{padding:52px 20px 0}
+.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.5px}
+.page-subtitle{font-size:13px;color:var(--muted);margin-top:4px}
 
-  /* ── SECTION HEADER ── */
-  .section-header {
-    display: flex; justify-content: space-between; align-items: center;
-    margin-bottom: 12px;
-  }
-  .section-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+/* ── CARDS ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 16px 0}
+.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 14px}
 
-  /* ── PROJECTS ── */
-  .project-item {
-    display: flex; justify-content: space-between; align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: opacity 0.15s;
-  }
-  .project-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .project-item:first-child { padding-top: 0; }
-  .project-item:active { opacity: 0.6; }
-  .project-name { font-weight: 500; font-size: 15px; }
-  .project-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
-  .project-balance { text-align: right; }
-  .project-balance .amount { font-weight: 500; font-size: 16px; }
-  .project-balance .amount.pos { color: var(--green); }
-  .project-balance .amount.neg { color: var(--red); }
-  .project-badge {
-    font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 3px; display: inline-block;
-  }
-  .project-badge.pos { background: var(--green-light); color: var(--green-dark); }
-  .project-badge.neg { background: var(--red-light); color: #791F1F; }
+/* ── HERO BALANCE ── */
+.hero{
+  margin:16px;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:20px;
+  position:relative;overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;top:-30px;right:-30px;
+  width:160px;height:160px;border-radius:50%;
+  background:radial-gradient(circle,rgba(200,240,96,.08) 0%,transparent 70%);
+  pointer-events:none;
+}
+.hero-label{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.hero-amount{font-family:'Syne',sans-serif;font-size:44px;font-weight:700;letter-spacing:-2px;margin-top:4px;line-height:1}
+.hero-amount.pos{color:var(--accent)}
+.hero-amount.neg{color:var(--red)}
+.hero-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.hero-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:12px}
+.hero-stat-label{font-size:11px;color:var(--muted);margin-bottom:4px}
+.hero-stat-val{font-size:17px;font-weight:500}
+.hero-stat-val.green{color:var(--green)}
+.hero-stat-val.red{color:var(--red)}
 
-  /* ── TRANSACTIONS ── */
-  .tx-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 11px 0;
-    border-bottom: 1px solid var(--border);
-  }
-  .tx-item:last-child { border-bottom: none; padding-bottom: 0; }
-  .tx-item:first-child { padding-top: 0; }
-  .tx-icon {
-    width: 38px; height: 38px; border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 16px; flex-shrink: 0;
-  }
-  .tx-icon.in { background: var(--green-light); color: var(--green); }
-  .tx-icon.out { background: var(--red-light); color: var(--red); }
-  .tx-icon.inv { background: var(--amber-light); color: var(--amber); }
-  .tx-info { flex: 1; min-width: 0; }
-  .tx-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tx-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
-  .tx-amount { font-weight: 500; font-size: 15px; white-space: nowrap; }
-  .tx-amount.in { color: var(--green); }
-  .tx-amount.out { color: var(--red); }
-  .tx-amount.inv { color: var(--amber); }
+/* ── SECTION ── */
+.section-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px}
+.section-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.section-action{font-size:13px;color:var(--accent);cursor:pointer}
 
-  /* ── FAB ── */
-  .fab-area {
-    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-    width: 100%; max-width: 430px;
-    background: linear-gradient(to top, var(--bg) 65%, transparent);
-    padding: 16px 20px 34px;
-    display: flex; gap: 10px; z-index: 200;
-  }
-  .fab {
-    flex: 1; height: 52px; border: none; border-radius: 14px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 14px; font-weight: 500; cursor: pointer;
-    display: flex; align-items: center; justify-content: center; gap: 8px;
-    transition: transform 0.12s, opacity 0.12s;
-  }
-  .fab:active { transform: scale(0.96); opacity: 0.85; }
-  .fab.primary { background: var(--text); color: #fff; }
-  .fab.invoice { background: var(--amber-light); color: #633806; }
+/* ── TX LIST ── */
+.tx-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+.tx-item:last-child{border-bottom:none;padding-bottom:0}
+.tx-item:first-child{padding-top:0}
+.tx-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.tx-icon.in{background:var(--green-bg);color:var(--green)}
+.tx-icon.out{background:var(--red-bg);color:var(--red)}
+.tx-icon.invoice{background:var(--amber-bg);color:var(--amber)}
+.tx-icon.receipt{background:var(--blue-bg);color:var(--blue)}
+.tx-info{flex:1;min-width:0}
+.tx-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-sub{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+.tx-amount{font-size:15px;font-weight:500;white-space:nowrap;text-align:right}
+.tx-amount.in{color:var(--green)}
+.tx-amount.out{color:var(--red)}
+.tx-amount.invoice{color:var(--amber)}
+.tx-amount.receipt{color:var(--blue)}
 
-  /* ── MODAL ── */
-  .overlay {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-    z-index: 300; display: none; align-items: flex-end;
-    -webkit-backdrop-filter: blur(4px);
-    backdrop-filter: blur(4px);
-  }
-  .overlay.show { display: flex; }
-  .sheet {
-    background: var(--bg);
-    border-radius: 22px 22px 0 0;
-    padding: 12px 20px 40px;
-    width: 100%; max-height: 92vh; overflow-y: auto;
-    animation: slideUp 0.28s ease;
-  }
-  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-  .sheet-handle {
-    width: 36px; height: 4px; border-radius: 2px;
-    background: rgba(0,0,0,0.15); margin: 0 auto 16px;
-  }
-  .sheet-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 20px; }
+/* ── CHIPS ── */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+.chip.green{background:var(--green-bg);color:var(--green)}
+.chip.red{background:var(--red-bg);color:var(--red)}
+.chip.amber{background:var(--amber-bg);color:var(--amber)}
+.chip.blue{background:var(--blue-bg);color:var(--blue)}
+.chip.muted{background:var(--surface3);color:var(--muted2)}
 
-  /* ── FORM ── */
-  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
-  .field { margin-bottom: 14px; }
-  input[type=text], input[type=number], input[type=date], select, textarea {
-    width: 100%; height: 48px;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 0 14px;
-    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
-    outline: none; appearance: none; -webkit-appearance: none;
-    transition: border-color 0.15s;
-  }
-  textarea { height: 80px; padding: 12px 14px; resize: none; }
-  input:focus, select:focus, textarea:focus { border-color: var(--blue); }
-  .type-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
-  .type-btn {
-    height: 44px; border: 1px solid var(--border); border-radius: 10px;
-    background: var(--card); cursor: pointer; font-family: 'DM Sans', sans-serif;
-    font-size: 13px; font-weight: 500; color: var(--muted);
-    display: flex; align-items: center; justify-content: center; gap: 6px;
-    transition: all 0.15s;
-  }
-  .type-btn.sel-in { background: var(--green-light); color: var(--green-dark); border-color: var(--green); }
-  .type-btn.sel-out { background: var(--red-light); color: #791F1F; border-color: var(--red); }
-  .type-btn.sel-inv { background: var(--amber-light); color: #633806; border-color: var(--amber); }
-  .submit-btn {
-    width: 100%; height: 52px; border: none; border-radius: 14px;
-    background: var(--text); color: #fff;
-    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
-    cursor: pointer; margin-top: 6px; transition: opacity 0.15s;
-  }
-  .submit-btn:active { opacity: 0.8; }
+/* ── PROJECT CARD ── */
+.proj-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:16px;
+  margin:8px 16px 0;cursor:pointer;
+  transition:transform .15s,border-color .15s;
+  position:relative;overflow:hidden;
+}
+.proj-card:active{transform:scale(0.98)}
+.proj-card.active-proj{border-color:rgba(200,240,96,0.3)}
+.proj-card-accent{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
+.proj-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:600;margin-bottom:4px}
+.proj-meta{font-size:12px;color:var(--muted);margin-bottom:12px}
+.proj-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.proj-stat{background:var(--surface2);border-radius:var(--radius-xs);padding:8px 10px}
+.proj-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.proj-stat-val{font-size:14px;font-weight:500;margin-top:2px}
+.proj-actions{display:flex;gap:8px;margin-top:12px}
+.proj-btn{flex:1;height:36px;border:1px solid var(--border2);border-radius:var(--radius-xs);background:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s}
+.proj-btn:active{background:var(--surface3)}
+.proj-btn.accent{background:var(--accent-dim);border-color:rgba(200,240,96,0.3);color:var(--accent)}
 
-  /* ── PROJECT MODAL ── */
-  .color-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
-  .color-dot {
-    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
-    border: 2px solid transparent; transition: transform 0.15s;
-  }
-  .color-dot.sel { border-color: var(--text); transform: scale(1.1); }
+/* ── INVOICE / RECEIPT CARDS ── */
+.doc-card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);padding:14px;
+  margin:8px 16px 0;display:flex;align-items:center;gap:12px;
+}
+.doc-thumb{
+  width:48px;height:60px;border-radius:8px;
+  background:var(--surface3);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;overflow:hidden;
+}
+.doc-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
+.doc-info{flex:1;min-width:0}
+.doc-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.doc-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.doc-amount{font-size:16px;font-weight:600;color:var(--amber);margin-top:4px}
+.doc-status{margin-top:6px}
 
-  /* ── EMPTY STATE ── */
-  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
-  .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+/* ── STATUS BADGE ── */
+.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.status-dot.paid{background:var(--green)}
+.status-dot.pending{background:var(--amber)}
+.status-dot.overdue{background:var(--red)}
 
-  /* ── PROJECT SELECTOR ── */
-  .proj-select-item {
-    display: flex; align-items: center; gap: 12px;
-    padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer;
-  }
-  .proj-select-item:last-child { border: none; }
-  .proj-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-  .proj-select-name { font-size: 15px; font-weight: 500; }
-  .proj-select-check { margin-left: auto; color: var(--green); font-size: 18px; }
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 24px;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+.empty-text{font-size:14px;line-height:1.6}
 
-  /* ── INVOICE FIELDS ── */
-  #inv-fields { display: none; }
-  #inv-fields.show { display: block; }
+/* ── OVERLAYS ── */
+.overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.7);
+  z-index:300;display:none;align-items:flex-end;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.overlay.show{display:flex}
+.sheet{
+  background:var(--surface);
+  border-radius:24px 24px 0 0;
+  width:100%;max-height:92vh;overflow-y:auto;
+  padding:0 0 calc(var(--safe-bottom) + 20px);
+  animation:sheetUp .28s cubic-bezier(0.4,0,0.2,1);
+}
+@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:12px auto 0}
+.sheet-content{padding:16px 20px 0}
+.sheet-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:20px}
 
-  .del-btn {
-    background: var(--red-light); color: #791F1F; border: none;
-    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
-    cursor: pointer; font-family: 'DM Sans', sans-serif;
-  }
+/* ── FORM ── */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%;height:48px;background:var(--surface2);
+  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  padding:0 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;
+  outline:none;appearance:none;-webkit-appearance:none;
+  transition:border-color .15s;
+}
+select option{background:var(--surface2)}
+textarea{height:72px;padding:12px 14px;resize:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.seg{display:grid;gap:6px;margin-bottom:14px}
+.seg-2{grid-template-columns:1fr 1fr}
+.seg-3{grid-template-columns:1fr 1fr 1fr}
+.seg-btn{
+  height:44px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:none;color:var(--muted2);font-family:'DM Sans',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .15s;
+}
+.seg-btn.active-in{background:var(--green-bg);color:var(--green);border-color:rgba(46,204,143,.3)}
+.seg-btn.active-out{background:var(--red-bg);color:var(--red);border-color:rgba(255,92,92,.3)}
+.seg-btn.active-inv{background:var(--amber-bg);color:var(--amber);border-color:rgba(245,166,35,.3)}
+.seg-btn.active-rec{background:var(--blue-bg);color:var(--blue);border-color:rgba(74,158,255,.3)}
+.seg-btn.active-proj{background:var(--accent-dim);color:var(--accent);border-color:rgba(200,240,96,.3)}
 
-  .tag-chip {
-    display: inline-flex; align-items: center; gap: 4px;
-    background: var(--blue-light); color: #0C447C;
-    border-radius: 20px; padding: 3px 10px; font-size: 12px;
-  }
+/* Photo upload zone */
+.upload-zone{
+  border:2px dashed var(--border2);border-radius:var(--radius-sm);
+  padding:20px;text-align:center;cursor:pointer;
+  transition:border-color .15s;margin-bottom:14px;
+  position:relative;
+}
+.upload-zone:active{border-color:var(--accent)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:28px;margin-bottom:8px}
+.upload-text{font-size:13px;color:var(--muted);line-height:1.5}
+.upload-preview{
+  width:100%;height:140px;border-radius:var(--radius-xs);
+  object-fit:cover;margin-top:10px;display:none;
+}
+.upload-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.upload-opt{
+  height:72px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+  background:var(--surface2);display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;
+  cursor:pointer;font-size:12px;color:var(--muted2);transition:all .15s;
+  position:relative;overflow:hidden;
+}
+.upload-opt input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-opt:active{background:var(--surface3);border-color:var(--accent)}
+.upload-opt-icon{font-size:24px}
+
+.submit-btn{
+  width:100%;height:52px;border-radius:var(--radius-sm);
+  border:none;background:var(--accent);color:#0F0F0E;
+  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
+  cursor:pointer;margin-top:6px;transition:opacity .15s;
+}
+.submit-btn:active{opacity:.85}
+.delete-btn{
+  background:var(--red-bg);color:var(--red);border:none;
+  padding:8px 14px;border-radius:var(--radius-xs);
+  font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
+}
+
+/* ── BILAN SHEET ── */
+.bilan-hero{background:var(--surface2);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;text-align:center}
+.bilan-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px}
+.bilan-balance{font-family:'Syne',sans-serif;font-size:36px;font-weight:700;margin-top:8px}
+.bilan-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+.bilan-row:last-child{border:none}
+.bilan-label{font-size:14px;color:var(--muted2)}
+.bilan-val{font-size:14px;font-weight:500}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{height:6px;background:var(--surface3);border-radius:3px;margin-top:12px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
+.progress-fill.neg{background:var(--red)}
+
+/* ── SWIPE INDICATOR ── */
+.swipe-hint{
+  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 80px);
+  left:50%;transform:translateX(-50%);
+  background:rgba(200,240,96,.15);border:1px solid rgba(200,240,96,.2);
+  color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;
+  padding:6px 14px;border-radius:20px;pointer-events:none;
+  opacity:0;animation:hintFade 2.5s ease 1s forwards;
+}
+@keyframes hintFade{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
+
+/* ── PROJ SECTION HEADER ── */
+.proj-section-head{
+  font-size:11px;font-weight:600;color:var(--muted);
+  letter-spacing:.1em;text-transform:uppercase;
+  padding:16px 20px 6px;
+}
+.divider{height:1px;background:var(--border);margin:8px 16px}
+
+/* ── PHOTO VIEW ── */
+.photo-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,0.95);
+  z-index:400;display:none;flex-direction:column;
+  align-items:center;justify-content:center;
+}
+.photo-overlay.show{display:flex}
+.photo-overlay img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:12px}
+.photo-close{position:absolute;top:52px;right:20px;width:36px;height:36px;border-radius:18px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div class="topbar-row">
-    <div class="app-name">FinFlow</div>
-    <div class="project-pill" onclick="openProjSelector()">
-      <span id="current-proj-dot" style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;flex-shrink:0;"></span>
-      <span id="current-proj-name">Tous les projets</span>
-      <span>▾</span>
+<!-- PAGES -->
+<div id="pages-wrapper">
+
+  <!-- PAGE 0: DASHBOARD -->
+  <div class="page" id="page-0">
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="page-title">Tableau de bord</div>
+          <div class="page-subtitle" id="dash-date"></div>
+        </div>
+        <div id="proj-filter-pill" onclick="openProjSelector()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:130px">
+          <span id="pf-dot" style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>
+          <span id="pf-name" style="overflow:hidden;text-overflow:ellipsis">Tous</span>
+          <span style="color:var(--muted);font-size:10px">▾</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero">
+      <div class="hero-label">Solde net</div>
+      <div class="hero-amount" id="d-balance">0,00 €</div>
+      <div class="hero-row">
+        <div class="hero-stat">
+          <div class="hero-stat-label">Entrées</div>
+          <div class="hero-stat-val green" id="d-in">0 €</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-label">Sorties + Fact.</div>
+          <div class="hero-stat-val red" id="d-out">0 €</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">Dernières opérations</div>
+      <div class="section-action" onclick="goToPage(2)">Voir tout →</div>
+    </div>
+    <div class="card" style="padding:0 16px">
+      <div id="recent-list"><div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div></div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">Factures récentes</div>
+      <div class="section-action" onclick="goToPage(3)">Voir tout →</div>
+    </div>
+    <div id="recent-invs"></div>
+  </div>
+
+  <!-- PAGE 1: PROJETS -->
+  <div class="page" id="page-1">
+    <div class="page-header">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div class="page-title">Projets</div>
+          <div class="page-subtitle" id="proj-subtitle">0 actifs · 0 terminés</div>
+        </div>
+        <button onclick="openAddProject()" style="width:40px;height:40px;border-radius:20px;background:var(--accent-dim);border:1px solid rgba(200,240,96,.3);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+      </div>
+    </div>
+    <div class="proj-section-head" id="active-head">EN COURS</div>
+    <div id="active-projs"></div>
+    <div class="divider"></div>
+    <div class="proj-section-head" id="done-head">TERMINÉS</div>
+    <div id="done-projs"></div>
+  </div>
+
+  <!-- PAGE 2: TRANSACTIONS -->
+  <div class="page" id="page-2">
+    <div class="page-header">
+      <div class="page-title">Transactions</div>
+      <div class="page-subtitle">Entrées & sorties</div>
+    </div>
+    <div class="card" style="padding:0 16px;margin-top:16px">
+      <div id="all-tx-list"><div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div></div>
     </div>
   </div>
-  <div class="balance-section">
-    <div class="balance-label">Solde net</div>
-    <div class="balance-amount" id="total-balance">0,00 €</div>
-    <div class="stats-row">
-      <div class="stat-box">
-        <div class="stat-dot in"></div>
-        <div class="stat-info">
-          <div class="stat-label">Entrées</div>
-          <div class="stat-val" id="total-in">0,00 €</div>
+
+  <!-- PAGE 3: FACTURES & JUSTIFICATIFS -->
+  <div class="page" id="page-3">
+    <div class="page-header">
+      <div class="page-title">Documents</div>
+      <div class="page-subtitle">Factures & justificatifs</div>
+    </div>
+
+    <!-- SUB TABS -->
+    <div style="display:flex;gap:8px;padding:12px 16px 0">
+      <button class="seg-btn active-inv" id="doctab-inv" onclick="switchDocTab('inv')" style="flex:1;height:38px">🧾 Factures</button>
+      <button class="seg-btn" id="doctab-rec" onclick="switchDocTab('rec')" style="flex:1;height:38px">📎 Justificatifs</button>
+    </div>
+
+    <div id="doc-inv-content">
+      <div id="inv-list-main"></div>
+    </div>
+    <div id="doc-rec-content" style="display:none">
+      <div id="rec-list-main"></div>
+    </div>
+  </div>
+
+  <!-- PAGE 4: SETTINGS / EXPORT -->
+  <div class="page" id="page-4">
+    <div class="page-header">
+      <div class="page-title">Réglages</div>
+      <div class="page-subtitle">Données & export</div>
+    </div>
+
+    <div class="section-head"><div class="section-title">Données</div></div>
+    <div class="card" style="padding:0 4px">
+      <div onclick="exportData()" style="display:flex;align-items:center;gap:12px;padding:16px 12px;cursor:pointer;border-bottom:1px solid var(--border)">
+        <span style="font-size:22px">📤</span>
+        <div>
+          <div style="font-size:14px;font-weight:500">Exporter toutes les données</div>
+          <div style="font-size:12px;color:var(--muted)">Télécharger en JSON</div>
         </div>
+        <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
       </div>
-      <div class="stat-box">
-        <div class="stat-dot out"></div>
-        <div class="stat-info">
-          <div class="stat-label">Sorties + Fact.</div>
-          <div class="stat-val" id="total-out">0,00 €</div>
+      <div onclick="document.getElementById('import-file').click()" style="display:flex;align-items:center;gap:12px;padding:16px 12px;cursor:pointer">
+        <span style="font-size:22px">📥</span>
+        <div>
+          <div style="font-size:14px;font-weight:500">Importer des données</div>
+          <div style="font-size:12px;color:var(--muted)">Restaurer depuis JSON</div>
         </div>
+        <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
       </div>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+
+    <div class="section-head"><div class="section-title">À propos</div></div>
+    <div class="card">
+      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">FinFlow</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6">Gestion financière par projet. Vos données sont stockées localement sur votre appareil. Aucune connexion requise.</div>
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="app-stats"></div>
+    </div>
+    <div class="card" style="margin-top:8px">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Zone de danger</div>
+      <button onclick="clearAll()" style="background:var(--red-bg);color:var(--red);border:1px solid rgba(255,92,92,.2);border-radius:var(--radius-xs);padding:10px 16px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%">🗑 Effacer toutes les données</button>
     </div>
   </div>
 </div>
 
-<!-- NAV TABS -->
-<div class="nav-tabs">
-  <div class="tab active" onclick="showTab('transactions')">Transactions</div>
-  <div class="tab" onclick="showTab('projects')">Projets</div>
-  <div class="tab" onclick="showTab('factures')">Factures</div>
-</div>
-
-<!-- CONTENT -->
-<div class="content">
-
-  <!-- TRANSACTIONS TAB -->
-  <div id="tab-transactions">
-    <div class="card" id="tx-list-card">
-      <div class="section-header">
-        <div class="section-title">Toutes les opérations</div>
-      </div>
-      <div id="tx-list"><div class="empty"><div class="empty-icon">💸</div>Aucune transaction pour l'instant.<br>Commencez par en ajouter une.</div></div>
-    </div>
+<!-- BOTTOM NAV -->
+<div id="bottom-nav">
+  <div class="nav-item active" onclick="goToPage(0)">
+    <div class="nav-icon">🏠</div>
+    <div class="nav-label">Dashboard</div>
   </div>
-
-  <!-- PROJECTS TAB -->
-  <div id="tab-projects" style="display:none">
-    <div class="card" id="proj-list-card">
-      <div class="section-header">
-        <div class="section-title">Mes projets</div>
-        <button style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text)" onclick="openAddProject()">+</button>
-      </div>
-      <div id="proj-list"><div class="empty"><div class="empty-icon">📁</div>Aucun projet créé.<br>Ajoutez votre premier projet.</div></div>
-    </div>
+  <div class="nav-item" onclick="goToPage(1)">
+    <div class="nav-icon">📁</div>
+    <div class="nav-label">Projets</div>
   </div>
-
-  <!-- FACTURES TAB -->
-  <div id="tab-factures" style="display:none">
-    <div class="card" id="inv-list-card">
-      <div class="section-header">
-        <div class="section-title">Factures</div>
-      </div>
-      <div id="inv-list"><div class="empty"><div class="empty-icon">🧾</div>Aucune facture enregistrée.</div></div>
-    </div>
+  <div class="nav-item" onclick="goToPage(2)">
+    <div class="nav-icon">↕️</div>
+    <div class="nav-label">Flux</div>
   </div>
-
+  <div class="nav-item" onclick="goToPage(3)">
+    <div class="nav-icon">🧾</div>
+    <div class="nav-label">Documents</div>
+  </div>
+  <div class="nav-item" onclick="goToPage(4)">
+    <div class="nav-icon">⚙️</div>
+    <div class="nav-label">Réglages</div>
+  </div>
 </div>
 
 <!-- FAB -->
-<div class="fab-area">
-  <button class="fab invoice" onclick="openAddTransaction('invoice')">🧾 Facture</button>
-  <button class="fab primary" onclick="openAddTransaction('tx')">+ Transaction</button>
+<div class="fab-wrap">
+  <div id="fab-menu">
+    <div class="fab-mini" onclick="openModal('in')"><span class="fab-mini-icon">↑</span>Entrée d'argent</div>
+    <div class="fab-mini" onclick="openModal('out')"><span class="fab-mini-icon">↓</span>Sortie d'argent</div>
+    <div class="fab-mini" onclick="openModal('invoice')"><span class="fab-mini-icon">🧾</span>Facture</div>
+    <div class="fab-mini" onclick="openModal('receipt')"><span class="fab-mini-icon">📎</span>Justificatif</div>
+  </div>
+  <button class="fab-main" id="fab-btn" onclick="toggleFab()">+</button>
 </div>
 
-<!-- ══ OVERLAY: ADD TRANSACTION ══ -->
-<div class="overlay" id="overlay-tx" onclick="closeOnBg(event,'overlay-tx')">
+<div class="swipe-hint">← Swipez pour naviguer →</div>
+
+<!-- ══ MODAL: ADD TRANSACTION ══ -->
+<div class="overlay" id="overlay-tx" onclick="closeBg(event,'overlay-tx')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title" id="modal-tx-title">Nouvelle transaction</div>
+    <div class="sheet-content">
+      <div class="sheet-title" id="modal-title">Nouveau</div>
 
-    <div class="field">
-      <label>Type</label>
-      <div class="type-toggle">
-        <button class="type-btn sel-in" id="btn-in" onclick="setType('in')">↑ Entrée</button>
-        <button class="type-btn" id="btn-out" onclick="setType('out')">↓ Sortie</button>
-        <button class="type-btn" id="btn-inv" onclick="setType('invoice')">🧾 Facture</button>
+      <div class="field" id="type-field">
+        <label>Type</label>
+        <div class="seg seg-2">
+          <button class="seg-btn" id="seg-in" onclick="setType('in')">↑ Entrée</button>
+          <button class="seg-btn" id="seg-out" onclick="setType('out')">↓ Sortie</button>
+        </div>
       </div>
-    </div>
 
-    <div class="field">
-      <label>Description</label>
-      <input type="text" id="tx-desc" placeholder="Ex: Paiement client, Achat matériel…">
-    </div>
-
-    <div class="field">
-      <label>Montant (€)</label>
-      <input type="number" id="tx-amount" placeholder="0.00" step="0.01" min="0">
-    </div>
-
-    <div class="field">
-      <label>Projet</label>
-      <select id="tx-project">
-        <option value="">— Aucun projet —</option>
-      </select>
-    </div>
-
-    <div class="field">
-      <label>Date</label>
-      <input type="date" id="tx-date">
-    </div>
-
-    <!-- INVOICE EXTRA FIELDS -->
-    <div id="inv-fields">
       <div class="field">
-        <label>N° Facture</label>
-        <input type="text" id="inv-num" placeholder="FAC-2024-001">
+        <label>Description</label>
+        <input type="text" id="f-desc" placeholder="Ex: Paiement client ACME…">
       </div>
       <div class="field">
-        <label>Client / Fournisseur</label>
-        <input type="text" id="inv-client" placeholder="Nom de l'entreprise ou personne">
+        <label>Montant (€)</label>
+        <input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0">
       </div>
       <div class="field">
-        <label>Échéance</label>
-        <input type="date" id="inv-due">
+        <label>Projet</label>
+        <select id="f-project"><option value="">— Aucun projet —</option></select>
       </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="f-date">
+      </div>
+
+      <!-- INVOICE FIELDS -->
+      <div id="inv-extra" style="display:none">
+        <div class="field"><label>N° Facture</label><input type="text" id="f-invnum" placeholder="FAC-2024-001"></div>
+        <div class="field"><label>Client / Fournisseur</label><input type="text" id="f-client" placeholder="Nom de l'entreprise…"></div>
+        <div class="field"><label>Échéance</label><input type="date" id="f-due"></div>
+        <div class="field">
+          <label>Statut</label>
+          <select id="f-status">
+            <option value="pending">En attente</option>
+            <option value="paid">Payée</option>
+            <option value="overdue">En retard</option>
+          </select>
+        </div>
+        <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Conditions, remarques…"></textarea></div>
+        <div class="field">
+          <label>Joindre la facture (PDF ou photo)</label>
+          <div class="upload-options">
+            <div class="upload-opt">
+              <input type="file" accept="image/*,application/pdf" onchange="handleFile(event,'invoice')" id="inv-file-input">
+              <div class="upload-opt-icon">📷</div>
+              <span>Photo / PDF</span>
+            </div>
+            <div class="upload-opt">
+              <input type="file" accept="image/*" capture="environment" onchange="handleFile(event,'invoice')" id="inv-cam-input">
+              <div class="upload-opt-icon">📸</div>
+              <span>Appareil photo</span>
+            </div>
+          </div>
+          <div id="inv-preview-wrap" style="display:none;margin-bottom:14px">
+            <img id="inv-preview" class="upload-preview" style="display:block">
+            <div id="inv-pdf-badge" style="display:none;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius-xs);padding:8px 12px;font-size:13px;margin-top:8px">📄 PDF joint</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECEIPT FIELDS -->
+      <div id="rec-extra" style="display:none">
+        <div class="field"><label>Libellé</label><input type="text" id="f-rec-label" placeholder="Ex: Ticket carburant, Matériaux…"></div>
+        <div class="field">
+          <label>Joindre le justificatif (photo ou PDF)</label>
+          <div class="upload-options">
+            <div class="upload-opt">
+              <input type="file" accept="image/*,application/pdf" onchange="handleFile(event,'receipt')" id="rec-file-input">
+              <div class="upload-opt-icon">📁</div>
+              <span>Galerie / PDF</span>
+            </div>
+            <div class="upload-opt">
+              <input type="file" accept="image/*" capture="environment" onchange="handleFile(event,'receipt')" id="rec-cam-input">
+              <div class="upload-opt-icon">📸</div>
+              <span>Appareil photo</span>
+            </div>
+          </div>
+          <div id="rec-preview-wrap" style="display:none;margin-bottom:14px">
+            <img id="rec-preview" class="upload-preview" style="display:block">
+            <div id="rec-pdf-badge" style="display:none;background:var(--blue-bg);color:var(--blue);border-radius:var(--radius-xs);padding:8px 12px;font-size:13px;margin-top:8px">📄 PDF joint</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="submitTx()">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ MODAL: ADD PROJECT ══ -->
+<div class="overlay" id="overlay-proj" onclick="closeBg(event,'overlay-proj')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-content">
+      <div class="sheet-title">Nouveau projet</div>
+      <div class="field"><label>Nom du projet</label><input type="text" id="p-name" placeholder="Ex: Rénovation salon, Client ACME…"></div>
+      <div class="field">
+        <label>Couleur</label>
+        <div id="color-picker" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"></div>
+      </div>
+      <div class="field"><label>Description (optionnel)</label><textarea id="p-desc" placeholder="Quelques mots sur ce projet…"></textarea></div>
       <div class="field">
         <label>Statut</label>
-        <select id="inv-status">
-          <option value="pending">En attente</option>
-          <option value="paid">Payée</option>
-          <option value="overdue">En retard</option>
-        </select>
+        <div class="seg seg-2">
+          <button class="seg-btn active-proj" id="ps-active" onclick="setProjStatus('active')">🟢 En cours</button>
+          <button class="seg-btn" id="ps-done" onclick="setProjStatus('done')">✅ Terminé</button>
+        </div>
       </div>
-      <div class="field">
-        <label>Notes</label>
-        <textarea id="inv-notes" placeholder="Détails, conditions, remarques…"></textarea>
-      </div>
+      <button class="submit-btn" onclick="submitProject()">Créer le projet</button>
     </div>
-
-    <button class="submit-btn" id="submit-tx-btn" onclick="submitTransaction()">Enregistrer</button>
   </div>
 </div>
 
-<!-- ══ OVERLAY: ADD PROJECT ══ -->
-<div class="overlay" id="overlay-proj" onclick="closeOnBg(event,'overlay-proj')">
+<!-- ══ MODAL: PROJECT SELECTOR ══ -->
+<div class="overlay" id="overlay-ps" onclick="closeBg(event,'overlay-ps')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Nouveau projet</div>
-    <div class="field">
-      <label>Nom du projet</label>
-      <input type="text" id="proj-name" placeholder="Ex: Rénovation maison, Client ACME…">
+    <div class="sheet-content">
+      <div class="sheet-title">Filtrer par projet</div>
+      <div id="ps-list"></div>
     </div>
-    <div class="field">
-      <label>Couleur</label>
-      <div class="color-row" id="color-row"></div>
-    </div>
-    <div class="field">
-      <label>Description (optionnel)</label>
-      <textarea id="proj-desc" placeholder="Quelques mots sur ce projet…"></textarea>
-    </div>
-    <button class="submit-btn" onclick="submitProject()">Créer le projet</button>
   </div>
 </div>
 
-<!-- ══ OVERLAY: PROJECT SELECTOR ══ -->
-<div class="overlay" id="overlay-ps" onclick="closeOnBg(event,'overlay-ps')">
+<!-- ══ MODAL: BILAN FINANCIER ══ -->
+<div class="overlay" id="overlay-bilan" onclick="closeBg(event,'overlay-bilan')">
   <div class="sheet">
     <div class="sheet-handle"></div>
-    <div class="sheet-title">Choisir un projet</div>
-    <div id="ps-list"></div>
+    <div class="sheet-content">
+      <div class="sheet-title">Bilan financier</div>
+      <div id="bilan-content"></div>
+      <button class="submit-btn" style="margin-top:16px;background:var(--surface3);color:var(--text)" onclick="printBilan()">📄 Exporter en PDF</button>
+    </div>
   </div>
+</div>
+
+<!-- ══ PHOTO VIEWER ══ -->
+<div class="photo-overlay" id="photo-viewer" onclick="closePhoto()">
+  <button class="photo-close" onclick="closePhoto()">✕</button>
+  <img id="photo-img" src="" alt="">
 </div>
 
 <script>
-// ── STATE ──
-let state = JSON.parse(localStorage.getItem('finflow') || 'null') || {
-  projects: [],
-  transactions: [],
-  currentProject: null
-};
+// ─── STATE ───────────────────────────────────────
+let S = JSON.parse(localStorage.getItem('finflow2')||'null') || {projects:[],transactions:[],filter:null};
+const save = () => localStorage.setItem('finflow2',JSON.stringify(S));
 
-const COLORS = ['#1D9E75','#378ADD','#E24B4A','#EF9F27','#7F77DD','#D4537E','#639922','#D85A30'];
-let selectedColor = COLORS[0];
-let selectedType = 'in';
-let editingTx = null;
-let activeTab = 'transactions';
+const COLORS = ['#2ECC8F','#4A9EFF','#FF5C5C','#F5A623','#C8F060','#B06EFF','#FF7849','#00C4D4'];
+let selColor = COLORS[0], selType = 'in', selProjStatus = 'active';
+let pendingFile = {invoice:null, receipt:null};
+let currentBilanId = null;
+let fabOpen = false;
+let docTab = 'inv';
 
-function save() { localStorage.setItem('finflow', JSON.stringify(state)); }
+// ─── NAVIGATION ──────────────────────────────────
+let curPage = 0;
+let touchX = 0;
+const wrapper = document.getElementById('pages-wrapper');
 
-function fmt(n) {
-  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+function goToPage(i) {
+  curPage = i;
+  wrapper.style.transform = `translateX(-${i*20}%)`;
+  document.querySelectorAll('.nav-item').forEach((el,j) => el.classList.toggle('active',j===i));
+  if (fabOpen) toggleFab();
 }
 
-function fmtDate(d) {
-  if (!d) return '';
-  return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+// Touch swipe
+wrapper.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
+wrapper.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 60) {
+    const dir = dx < 0 ? 1 : -1;
+    const next = Math.max(0, Math.min(4, curPage + dir));
+    goToPage(next);
+  }
+}, {passive:true});
+
+// ─── FAB ─────────────────────────────────────────
+function toggleFab() {
+  fabOpen = !fabOpen;
+  document.getElementById('fab-menu').classList.toggle('open', fabOpen);
+  document.getElementById('fab-btn').textContent = fabOpen ? '✕' : '+';
+  document.getElementById('fab-btn').style.transform = fabOpen ? 'rotate(45deg)' : '';
 }
 
-// ── TABS ──
-function showTab(t) {
-  activeTab = t;
-  ['transactions','projects','factures'].forEach(x => {
-    document.getElementById('tab-'+x).style.display = x === t ? '' : 'none';
-  });
-  document.querySelectorAll('.tab').forEach((el, i) => {
-    el.classList.toggle('active', ['transactions','projects','factures'][i] === t);
-  });
-  render();
-}
+// ─── FORMAT ──────────────────────────────────────
+const fmt = n => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
+const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '';
+const fmtShort = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '';
+const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
 
-// ── RENDER ──
+// ─── RENDER ──────────────────────────────────────
 function render() {
-  renderHeader();
-  renderTransactions();
+  renderDash();
   renderProjects();
-  renderInvoices();
-  populateProjectSelect();
+  renderTxList();
+  renderDocs();
+  renderSettings();
+  updateFilter();
 }
 
-function filterByProject(items) {
-  if (!state.currentProject) return items;
-  return items.filter(t => t.project === state.currentProject);
+function filtered(items) {
+  if (!S.filter) return items;
+  return items.filter(t => t.project === S.filter);
 }
 
-function renderHeader() {
-  const txs = filterByProject(state.transactions);
-  const totalIn = txs.filter(t => t.type === 'in').reduce((s, t) => s + t.amount, 0);
-  const totalOut = txs.filter(t => t.type !== 'in').reduce((s, t) => s + t.amount, 0);
+function renderDash() {
+  const txs = filtered(S.transactions);
+  const totalIn = txs.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
+  const totalOut = txs.filter(t=>t.type!=='in').reduce((a,t)=>a+t.amount,0);
   const bal = totalIn - totalOut;
 
-  const balEl = document.getElementById('total-balance');
+  const balEl = document.getElementById('d-balance');
   balEl.textContent = fmt(bal);
-  balEl.className = 'balance-amount' + (bal >= 0 ? ' pos' : ' neg');
-  document.getElementById('total-in').textContent = fmt(totalIn);
-  document.getElementById('total-out').textContent = fmt(totalOut);
+  balEl.className = 'hero-amount ' + (bal>=0?'pos':'neg');
+  document.getElementById('d-in').textContent = fmt(totalIn);
+  document.getElementById('d-out').textContent = fmt(totalOut);
 
-  const cp = state.currentProject;
-  const proj = state.projects.find(p => p.id === cp);
-  document.getElementById('current-proj-name').textContent = proj ? proj.name : 'Tous les projets';
-  document.getElementById('current-proj-dot').style.background = proj ? proj.color : '#9FE1CB';
-}
+  const now = new Date();
+  document.getElementById('dash-date').textContent = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
-function renderTransactions() {
-  const el = document.getElementById('tx-list');
-  let txs = filterByProject(state.transactions).filter(t => t.type !== 'invoice');
-  txs = txs.slice().reverse();
-  if (!txs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">💸</div>Aucune transaction.<br>Ajoutez votre première entrée ou sortie.</div>'; return; }
-  el.innerHTML = txs.map(t => txCard(t)).join('');
-}
+  const recents = txs.filter(t=>t.type!=='invoice'&&t.type!=='receipt').slice().reverse().slice(0,5);
+  const rl = document.getElementById('recent-list');
+  rl.innerHTML = recents.length ? recents.map(txRow).join('') : '<div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div>';
 
-function renderInvoices() {
-  const el = document.getElementById('inv-list');
-  let invs = filterByProject(state.transactions).filter(t => t.type === 'invoice');
-  invs = invs.slice().reverse();
-  if (!invs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🧾</div>Aucune facture enregistrée.</div>'; return; }
-  el.innerHTML = invs.map(t => invoiceCard(t)).join('');
-}
-
-function txCard(t) {
-  const proj = state.projects.find(p => p.id === t.project);
-  const typeLabel = t.type === 'in' ? 'in' : 'out';
-  const icon = t.type === 'in' ? '↑' : '↓';
-  const sign = t.type === 'in' ? '+' : '−';
-  const projBadge = proj ? `<span class="tag-chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
-  return `<div class="tx-item">
-    <div class="tx-icon ${typeLabel}">${icon}</div>
-    <div class="tx-info">
-      <div class="tx-name">${t.desc || 'Sans titre'}</div>
-      <div class="tx-meta">${fmtDate(t.date)} ${projBadge}</div>
-    </div>
-    <div>
-      <div class="tx-amount ${typeLabel}">${sign}${fmt(t.amount)}</div>
-      <div style="text-align:right;margin-top:4px">
-        <button class="del-btn" onclick="deleteTx('${t.id}')">Suppr.</button>
-      </div>
-    </div>
-  </div>`;
-}
-
-function invoiceCard(t) {
-  const proj = state.projects.find(p => p.id === t.project);
-  const statusColor = t.invStatus === 'paid' ? 'var(--green)' : t.invStatus === 'overdue' ? 'var(--red)' : 'var(--amber)';
-  const statusBg = t.invStatus === 'paid' ? 'var(--green-light)' : t.invStatus === 'overdue' ? 'var(--red-light)' : 'var(--amber-light)';
-  const statusLabel = t.invStatus === 'paid' ? 'Payée' : t.invStatus === 'overdue' ? 'En retard' : 'En attente';
-  const projBadge = proj ? `<span class="tag-chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
-  return `<div class="tx-item">
-    <div class="tx-icon inv">🧾</div>
-    <div class="tx-info">
-      <div class="tx-name">${t.invNum ? t.invNum + ' — ' : ''}${t.invClient || t.desc || 'Sans titre'}</div>
-      <div class="tx-meta">${fmtDate(t.date)} · Éch. ${fmtDate(t.invDue)} ${projBadge}</div>
-      <div style="margin-top:4px"><span style="background:${statusBg};color:${statusColor};font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500">${statusLabel}</span></div>
-    </div>
-    <div style="text-align:right">
-      <div class="tx-amount inv">${fmt(t.amount)}</div>
-      <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
-        ${t.invStatus !== 'paid' ? `<button class="del-btn" style="background:var(--green-light);color:var(--green-dark)" onclick="markPaid('${t.id}')">Payée</button>` : ''}
-        <button class="del-btn" onclick="deleteTx('${t.id}')">Suppr.</button>
-      </div>
-    </div>
-  </div>`;
+  const recInvs = txs.filter(t=>t.type==='invoice').slice().reverse().slice(0,3);
+  const ri = document.getElementById('recent-invs');
+  ri.innerHTML = recInvs.length ? recInvs.map(docCardHTML).join('') : '';
 }
 
 function renderProjects() {
-  const el = document.getElementById('proj-list');
-  if (!state.projects.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📁</div>Aucun projet.<br>Créez votre premier projet.</div>'; return; }
-  el.innerHTML = state.projects.map(p => {
-    const txs = state.transactions.filter(t => t.project === p.id);
-    const totalIn = txs.filter(t => t.type === 'in').reduce((s, t) => s + t.amount, 0);
-    const totalOut = txs.filter(t => t.type !== 'in').reduce((s, t) => s + t.amount, 0);
-    const bal = totalIn - totalOut;
-    const pos = bal >= 0;
-    return `<div class="project-item" onclick="selectProject('${p.id}')">
-      <div>
-        <div style="display:flex;align-items:center;gap:8px">
-          <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
-          <div class="project-name">${p.name}</div>
-        </div>
-        <div class="project-sub">${txs.length} opération${txs.length !== 1 ? 's' : ''} · Ent. ${fmt(totalIn)}</div>
-      </div>
-      <div class="project-balance">
-        <div class="amount ${pos ? 'pos' : 'neg'}">${fmt(bal)}</div>
-        <div><span class="project-badge ${pos ? 'pos' : 'neg'}">${pos ? '▲' : '▼'} solde</span></div>
-      </div>
-    </div>`;
-  }).join('');
+  const active = S.projects.filter(p=>p.status!=='done');
+  const done = S.projects.filter(p=>p.status==='done');
+  document.getElementById('proj-subtitle').textContent = `${active.length} actif${active.length!==1?'s':''} · ${done.length} terminé${done.length!==1?'s':''}`;
+  document.getElementById('active-projs').innerHTML = active.length ? active.map(projCardHTML).join('') : '<div class="empty" style="padding:24px"><div class="empty-text">Aucun projet en cours</div></div>';
+  document.getElementById('done-projs').innerHTML = done.length ? done.map(projCardHTML).join('') : '<div class="empty" style="padding:24px"><div class="empty-text">Aucun projet terminé</div></div>';
 }
 
-// ── ACTIONS ──
-function deleteTx(id) {
-  if (!confirm('Supprimer cette opération ?')) return;
-  state.transactions = state.transactions.filter(t => t.id !== id);
+function renderTxList() {
+  const txs = filtered(S.transactions).filter(t=>t.type!=='invoice'&&t.type!=='receipt').slice().reverse();
+  const el = document.getElementById('all-tx-list');
+  el.innerHTML = txs.length ? txs.map(txRow).join('') : '<div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction.<br>Ajoutez une entrée ou sortie.</div></div>';
+}
+
+function renderDocs() {
+  const invs = filtered(S.transactions).filter(t=>t.type==='invoice').slice().reverse();
+  const recs = filtered(S.transactions).filter(t=>t.type==='receipt').slice().reverse();
+  document.getElementById('inv-list-main').innerHTML = invs.length ? invs.map(docCardHTML).join('') : '<div class="empty"><div class="empty-icon">🧾</div><div class="empty-text">Aucune facture</div></div>';
+  document.getElementById('rec-list-main').innerHTML = recs.length ? recs.map(docCardHTML).join('') : '<div class="empty"><div class="empty-icon">📎</div><div class="empty-text">Aucun justificatif</div></div>';
+}
+
+function renderSettings() {
+  document.getElementById('app-stats').innerHTML = [
+    `<span class="chip muted">${S.projects.length} projets</span>`,
+    `<span class="chip muted">${S.transactions.filter(t=>t.type!=='invoice'&&t.type!=='receipt').length} transactions</span>`,
+    `<span class="chip muted">${S.transactions.filter(t=>t.type==='invoice').length} factures</span>`,
+    `<span class="chip muted">${S.transactions.filter(t=>t.type==='receipt').length} justificatifs</span>`,
+  ].join('');
+}
+
+function updateFilter() {
+  const p = S.projects.find(x=>x.id===S.filter);
+  document.getElementById('pf-name').textContent = p ? p.name : 'Tous';
+  document.getElementById('pf-dot').style.background = p ? p.color : 'var(--accent)';
+}
+
+// ─── HTML BUILDERS ───────────────────────────────
+function txRow(t) {
+  const icons = {in:'↑',out:'↓',invoice:'🧾',receipt:'📎'};
+  const sign = t.type==='in' ? '+' : '−';
+  const proj = S.projects.find(p=>p.id===t.project);
+  const projTag = proj ? `<span class="chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
+  return `<div class="tx-item">
+    <div class="tx-icon ${t.type}">${icons[t.type]||'•'}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.desc||'Sans titre'}</div>
+      <div class="tx-sub">${fmtShort(t.date)} ${projTag}</div>
+    </div>
+    <div style="text-align:right">
+      <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
+      <button class="delete-btn" style="margin-top:4px;font-size:11px;padding:4px 10px" onclick="delTx('${t.id}')">Suppr.</button>
+    </div>
+  </div>`;
+}
+
+function docCardHTML(t) {
+  const statusLabel = {paid:'Payée',pending:'En attente',overdue:'En retard'}[t.invStatus||'pending'];
+  const statusClass = {paid:'green',pending:'amber',overdue:'red'}[t.invStatus||'pending'];
+  const isInv = t.type==='invoice';
+  const proj = S.projects.find(p=>p.id===t.project);
+  const thumb = t.fileData
+    ? (t.fileType==='pdf' ? `<div style="display:flex;align-items:center;justify-content:center;width:48px;height:60px;border-radius:8px;background:var(--amber-bg);font-size:22px">📄</div>`
+      : `<img src="${t.fileData}" style="width:48px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="viewPhoto('${t.id}')">`)
+    : `<div style="width:48px;height:60px;border-radius:8px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:22px">${isInv?'🧾':'📎'}</div>`;
+  return `<div class="doc-card">
+    ${thumb}
+    <div class="doc-info">
+      <div class="doc-name">${isInv?(t.invNum?t.invNum+' — ':'')+(t.client||t.desc||'Facture') : (t.desc||'Justificatif')}</div>
+      <div class="doc-sub">${fmtD(t.date)}${t.due?' · Éch. '+fmtD(t.due):''}${proj?' · '+proj.name:''}</div>
+      <div class="doc-amount">${fmt(t.amount)}</div>
+      ${isInv?`<div class="doc-status"><span class="chip ${statusClass}"><span class="status-dot ${t.invStatus||'pending'}"></span>${statusLabel}</span>${t.invStatus!=='paid'?`<button class="delete-btn" style="background:var(--green-bg);color:var(--green);border:none;margin-left:6px;padding:3px 10px;font-size:11px" onclick="markPaid('${t.id}')">Payée</button>`:''}</div>`:''}
+      <div style="margin-top:6px"><button class="delete-btn" style="font-size:11px;padding:4px 10px" onclick="delTx('${t.id}')">Suppr.</button></div>
+    </div>
+  </div>`;
+}
+
+function projCardHTML(p) {
+  const txs = S.transactions.filter(t=>t.project===p.id);
+  const totalIn = txs.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
+  const totalOut = txs.filter(t=>t.type!=='in').reduce((a,t)=>a+t.amount,0);
+  const bal = totalIn-totalOut;
+  const invCount = txs.filter(t=>t.type==='invoice').length;
+  const recCount = txs.filter(t=>t.type==='receipt').length;
+  const isDone = p.status==='done';
+  return `<div class="proj-card ${S.filter===p.id?'active-proj':''}">
+    <div class="proj-card-accent" style="background:${p.color}"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+      <div class="proj-name">${p.name}</div>
+      <span class="chip ${isDone?'green':'muted'}" style="flex-shrink:0;margin-left:8px">${isDone?'✅ Terminé':'🟢 En cours'}</span>
+    </div>
+    ${p.desc?`<div class="proj-meta">${p.desc}</div>`:'<div class="proj-meta" style="margin-bottom:12px"></div>'}
+    <div class="proj-stats">
+      <div class="proj-stat"><div class="proj-stat-label">Entrées</div><div class="proj-stat-val" style="color:var(--green)">${fmt(totalIn)}</div></div>
+      <div class="proj-stat"><div class="proj-stat-label">Sorties</div><div class="proj-stat-val" style="color:var(--red)">${fmt(totalOut)}</div></div>
+      <div class="proj-stat"><div class="proj-stat-label">Solde</div><div class="proj-stat-val" style="color:${bal>=0?'var(--green)':'var(--red)'}">${fmt(bal)}</div></div>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
+      ${invCount?`<span class="chip amber">🧾 ${invCount} facture${invCount>1?'s':''}</span>`:''}
+      ${recCount?`<span class="chip blue">📎 ${recCount} pièce${recCount>1?'s':''}</span>`:''}
+    </div>
+    <div class="proj-actions">
+      <button class="proj-btn" onclick="filterProject('${p.id}');goToPage(0)">Filtrer</button>
+      <button class="proj-btn" onclick="toggleProjStatus('${p.id}')">${isDone?'Réactiver':'Terminer'}</button>
+      <button class="proj-btn accent" onclick="openBilan('${p.id}')">📊 Bilan</button>
+    </div>
+  </div>`;
+}
+
+// ─── ACTIONS ─────────────────────────────────────
+function delTx(id) {
+  if (!confirm('Supprimer ?')) return;
+  S.transactions = S.transactions.filter(t=>t.id!==id);
   save(); render();
 }
-
 function markPaid(id) {
-  const t = state.transactions.find(t => t.id === id);
-  if (t) { t.invStatus = 'paid'; save(); render(); }
+  const t = S.transactions.find(t=>t.id===id);
+  if (t) { t.invStatus='paid'; save(); render(); }
 }
-
-function selectProject(id) {
-  state.currentProject = state.currentProject === id ? null : id;
+function filterProject(id) {
+  S.filter = S.filter===id ? null : id;
   save(); render();
 }
-
-// ── PROJECT MODAL ──
-function openAddProject() {
-  const cr = document.getElementById('color-row');
-  cr.innerHTML = COLORS.map(c => `<div class="color-dot${c === selectedColor ? ' sel' : ''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`).join('');
-  selectedColor = COLORS[0];
-  document.getElementById('proj-name').value = '';
-  document.getElementById('proj-desc').value = '';
-  document.getElementById('overlay-proj').classList.add('show');
+function toggleProjStatus(id) {
+  const p = S.projects.find(p=>p.id===id);
+  if (p) { p.status = p.status==='done' ? 'active' : 'done'; save(); render(); }
 }
 
-function pickColor(c, el) {
-  selectedColor = c;
-  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('sel'));
-  el.classList.add('sel');
+// ─── PROJECT SELECTOR ────────────────────────────
+function openProjSelector() {
+  const all = [{id:null,name:'Tous les projets',color:'var(--accent)'},...S.projects];
+  document.getElementById('ps-list').innerHTML = all.map(p=>`
+    <div onclick="chooseFilter(${p.id?`'${p.id}'`:null})" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
+      <span style="font-size:15px;font-weight:500">${p.name}</span>
+      ${S.filter===p.id?'<span style="margin-left:auto;color:var(--accent);font-size:18px">✓</span>':''}
+    </div>`).join('');
+  document.getElementById('overlay-ps').classList.add('show');
+}
+function chooseFilter(id) {
+  S.filter=id; save(); render();
+  document.getElementById('overlay-ps').classList.remove('show');
 }
 
-function submitProject() {
-  const name = document.getElementById('proj-name').value.trim();
-  if (!name) { alert('Veuillez entrer un nom de projet.'); return; }
-  state.projects.push({ id: Date.now().toString(), name, color: selectedColor, desc: document.getElementById('proj-desc').value.trim() });
-  save();
-  document.getElementById('overlay-proj').classList.remove('show');
-  render();
+// ─── BILAN ───────────────────────────────────────
+function openBilan(id) {
+  currentBilanId = id;
+  const p = S.projects.find(x=>x.id===id);
+  const txs = S.transactions.filter(t=>t.project===id);
+  const ins = txs.filter(t=>t.type==='in');
+  const outs = txs.filter(t=>t.type==='out');
+  const invs = txs.filter(t=>t.type==='invoice');
+  const recs = txs.filter(t=>t.type==='receipt');
+  const totalIn = ins.reduce((a,t)=>a+t.amount,0);
+  const totalOut = outs.reduce((a,t)=>a+t.amount,0);
+  const totalInv = invs.reduce((a,t)=>a+t.amount,0);
+  const totalInvPaid = invs.filter(t=>t.invStatus==='paid').reduce((a,t)=>a+t.amount,0);
+  const totalRec = recs.reduce((a,t)=>a+t.amount,0);
+  const totalExpenses = totalOut + totalInv;
+  const bal = totalIn - totalExpenses;
+  const ratio = totalIn > 0 ? Math.min(totalExpenses/totalIn,1) : 0;
+
+  document.getElementById('bilan-content').innerHTML = `
+    <div class="bilan-hero">
+      <div class="bilan-name">${p.name}</div>
+      <div style="font-size:12px;color:var(--muted)">${p.status==='done'?'✅ Projet terminé':'🟢 En cours · '+txs.length+' opérations'}</div>
+      <div class="bilan-balance" style="color:${bal>=0?'var(--accent)':'var(--red)'}">${fmt(bal)}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">Solde net</div>
+      <div class="progress-bar" style="margin-top:16px">
+        <div class="progress-fill ${bal<0?'neg':''}" style="width:${ratio*100}%"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px">
+        <span>Dépenses ${Math.round(ratio*100)}% des revenus</span>
+        <span>${fmt(totalExpenses)} / ${fmt(totalIn)}</span>
+      </div>
+    </div>
+
+    <div style="background:var(--surface2);border-radius:var(--radius-sm);overflow:hidden">
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">💰 Entrées totales</span><span class="bilan-val" style="color:var(--green)">${fmt(totalIn)}</span></div>
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— Transactions entrantes</span><span class="bilan-val">${ins.length} × ${fmt(totalIn)}</span></div>
+
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">💸 Sorties directes</span><span class="bilan-val" style="color:var(--red)">${fmt(totalOut)}</span></div>
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">🧾 Factures (total)</span><span class="bilan-val" style="color:var(--amber)">${fmt(totalInv)}</span></div>
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— dont payées</span><span class="bilan-val" style="color:var(--green)">${fmt(totalInvPaid)}</span></div>
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— en attente</span><span class="bilan-val" style="color:var(--amber)">${fmt(totalInv-totalInvPaid)}</span></div>
+      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">📎 Justificatifs</span><span class="bilan-val">${recs.length} pièce${recs.length>1?'s':''}</span></div>
+    </div>
+
+    ${txs.length > 0 ? `
+    <div style="margin-top:16px">
+      <div class="section-title" style="margin-bottom:10px">DÉTAIL DES OPÉRATIONS</div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);overflow:hidden;padding:0 14px">
+        ${txs.slice().reverse().map(t=>`
+        <div class="bilan-row">
+          <div>
+            <div style="font-size:13px;font-weight:500">${t.desc||'Sans titre'}</div>
+            <div style="font-size:11px;color:var(--muted)">${fmtD(t.date)} · ${{in:'Entrée',out:'Sortie',invoice:'Facture',receipt:'Justificatif'}[t.type]}</div>
+          </div>
+          <span style="font-size:14px;font-weight:500;color:${t.type==='in'?'var(--green)':t.type==='invoice'?'var(--amber)':'var(--red)'}">${t.type==='in'?'+':'−'}${fmt(t.amount)}</span>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+  `;
+  document.getElementById('overlay-bilan').classList.add('show');
 }
 
-// ── TX MODAL ──
-function openAddTransaction(mode) {
-  editingTx = null;
-  document.getElementById('tx-desc').value = '';
-  document.getElementById('tx-amount').value = '';
-  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
-  document.getElementById('inv-num').value = '';
-  document.getElementById('inv-client').value = '';
-  document.getElementById('inv-due').value = '';
-  document.getElementById('inv-notes').value = '';
-  document.getElementById('inv-status').value = 'pending';
-  setType(mode === 'invoice' ? 'invoice' : 'in');
-  document.getElementById('modal-tx-title').textContent = mode === 'invoice' ? 'Nouvelle facture' : 'Nouvelle transaction';
+function printBilan() {
+  const p = S.projects.find(x=>x.id===currentBilanId);
+  const content = document.getElementById('bilan-content').innerText;
+  const w = window.open('','_blank');
+  w.document.write(`<html><head><title>Bilan — ${p?.name}</title><style>body{font-family:sans-serif;padding:32px;max-width:600px;margin:auto}h1{margin-bottom:8px}pre{white-space:pre-wrap;font-size:14px;line-height:1.7}</style></head><body><h1>Bilan financier — ${p?.name}</h1><pre>${content}</pre></body></html>`);
+  w.document.close();
+  w.print();
+}
+
+// ─── DOC TAB ─────────────────────────────────────
+function switchDocTab(t) {
+  docTab = t;
+  document.getElementById('doc-inv-content').style.display = t==='inv'?'':'none';
+  document.getElementById('doc-rec-content').style.display = t==='rec'?'':'none';
+  document.getElementById('doctab-inv').className = 'seg-btn '+(t==='inv'?'active-inv':'');
+  document.getElementById('doctab-rec').className = 'seg-btn '+(t==='rec'?'active-rec':'');
+}
+
+// ─── ADD MODAL ───────────────────────────────────
+function openModal(type) {
+  if (fabOpen) toggleFab();
+  setType(type);
+  document.getElementById('f-desc').value='';
+  document.getElementById('f-amount').value='';
+  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('f-invnum').value='';
+  document.getElementById('f-client').value='';
+  document.getElementById('f-due').value='';
+  document.getElementById('f-status').value='pending';
+  document.getElementById('f-notes').value='';
+  document.getElementById('f-rec-label').value='';
+  pendingFile = {invoice:null,receipt:null};
+  document.getElementById('inv-preview-wrap').style.display='none';
+  document.getElementById('rec-preview-wrap').style.display='none';
+  document.getElementById('inv-pdf-badge').style.display='none';
+  document.getElementById('rec-pdf-badge').style.display='none';
+  populateProjSelect();
+
+  const titles = {in:'Nouvelle entrée',out:'Nouvelle sortie',invoice:'Nouvelle facture',receipt:'Nouveau justificatif'};
+  document.getElementById('modal-title').textContent = titles[type];
   document.getElementById('overlay-tx').classList.add('show');
 }
 
 function setType(t) {
-  selectedType = t;
-  ['in','out','inv'].forEach(x => {
-    document.getElementById('btn-' + (x === 'inv' ? 'inv' : x)).className = 'type-btn';
+  selType = t;
+  const map = {in:'in',out:'out',invoice:'inv',receipt:'rec'};
+  ['in','out','invoice','receipt'].forEach(x => {
+    const el = document.getElementById('seg-'+{in:'in',out:'out',invoice:'inv',receipt:'rec'}[x]);
+    if (el) el.className = 'seg-btn';
   });
-  const sel = t === 'in' ? 'sel-in' : t === 'out' ? 'sel-out' : 'sel-inv';
-  const btn = t === 'invoice' ? 'btn-inv' : 'btn-' + t;
-  document.getElementById(btn).className = 'type-btn ' + sel;
-  document.getElementById('inv-fields').className = t === 'invoice' ? 'show' : '';
+  ['in','out'].forEach(x => {
+    const el = document.getElementById('seg-'+x);
+    if (el) el.className = 'seg-btn'+(t===x?' active-'+x:'');
+  });
+  document.getElementById('type-field').style.display = (t==='invoice'||t==='receipt') ? 'none' : '';
+  document.getElementById('inv-extra').style.display = t==='invoice' ? 'block' : 'none';
+  document.getElementById('rec-extra').style.display = t==='receipt' ? 'block' : 'none';
 }
 
-function submitTransaction() {
-  const desc = document.getElementById('tx-desc').value.trim();
-  const amount = parseFloat(document.getElementById('tx-amount').value);
+// ─── FILE HANDLING ───────────────────────────────
+function handleFile(e, ctx) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const data = ev.target.result;
+    const isPdf = file.type==='application/pdf';
+    pendingFile[ctx] = {data, type: isPdf?'pdf':'image', name:file.name};
+    if (ctx==='invoice') {
+      document.getElementById('inv-preview-wrap').style.display='block';
+      if (isPdf) {
+        document.getElementById('inv-preview').style.display='none';
+        document.getElementById('inv-pdf-badge').style.display='block';
+      } else {
+        document.getElementById('inv-preview').src=data;
+        document.getElementById('inv-preview').style.display='block';
+        document.getElementById('inv-pdf-badge').style.display='none';
+      }
+    } else {
+      document.getElementById('rec-preview-wrap').style.display='block';
+      if (isPdf) {
+        document.getElementById('rec-preview').style.display='none';
+        document.getElementById('rec-pdf-badge').style.display='block';
+      } else {
+        document.getElementById('rec-preview').src=data;
+        document.getElementById('rec-preview').style.display='block';
+        document.getElementById('rec-pdf-badge').style.display='none';
+      }
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function viewPhoto(id) {
+  const t = S.transactions.find(t=>t.id===id);
+  if (!t||!t.fileData||t.fileType==='pdf') return;
+  document.getElementById('photo-img').src = t.fileData;
+  document.getElementById('photo-viewer').classList.add('show');
+}
+function closePhoto() { document.getElementById('photo-viewer').classList.remove('show'); }
+
+// ─── SUBMIT TX ───────────────────────────────────
+function submitTx() {
+  const desc = document.getElementById('f-desc').value.trim() || document.getElementById('f-rec-label').value.trim();
+  const amount = parseFloat(document.getElementById('f-amount').value);
   if (!desc) { alert('Veuillez entrer une description.'); return; }
-  if (!amount || amount <= 0) { alert('Veuillez entrer un montant valide.'); return; }
+  if (!amount || amount<=0) { alert('Montant invalide.'); return; }
+
+  const fctx = selType==='invoice' ? 'invoice' : 'receipt';
+  const fileObj = pendingFile[fctx];
 
   const tx = {
-    id: Date.now().toString(),
-    type: selectedType,
-    desc, amount,
-    project: document.getElementById('tx-project').value || null,
-    date: document.getElementById('tx-date').value,
-    invNum: document.getElementById('inv-num').value.trim(),
-    invClient: document.getElementById('inv-client').value.trim(),
-    invDue: document.getElementById('inv-due').value,
-    invStatus: document.getElementById('inv-status').value,
-    invNotes: document.getElementById('inv-notes').value.trim(),
+    id:uid(), type:selType, desc, amount,
+    project:document.getElementById('f-project').value||null,
+    date:document.getElementById('f-date').value,
+    fileData: fileObj?.data||null,
+    fileType: fileObj?.type||null,
+    fileName: fileObj?.name||null,
+    invNum:document.getElementById('f-invnum').value.trim(),
+    client:document.getElementById('f-client').value.trim(),
+    due:document.getElementById('f-due').value,
+    invStatus:document.getElementById('f-status').value,
+    notes:document.getElementById('f-notes').value.trim(),
   };
-  state.transactions.push(tx);
+  S.transactions.push(tx);
   save();
   document.getElementById('overlay-tx').classList.remove('show');
-  // Switch to right tab
-  if (selectedType === 'invoice') showTab('factures');
-  else showTab('transactions');
+
+  if (selType==='invoice'||selType==='receipt') goToPage(3);
+  else goToPage(2);
   render();
 }
 
-// ── PROJECT SELECTOR ──
-function openProjSelector() {
-  const el = document.getElementById('ps-list');
-  const all = [{ id: null, name: 'Tous les projets', color: '#9FE1CB' }, ...state.projects];
-  el.innerHTML = all.map(p => `
-    <div class="proj-select-item" onclick="chooseProject(${p.id ? "'" + p.id + "'" : null})">
-      <span class="proj-color" style="background:${p.color}"></span>
-      <span class="proj-select-name">${p.name}</span>
-      ${state.currentProject === p.id ? '<span class="proj-select-check">✓</span>' : ''}
-    </div>`).join('');
-  document.getElementById('overlay-ps').classList.add('show');
+// ─── SUBMIT PROJECT ──────────────────────────────
+function openAddProject() {
+  document.getElementById('p-name').value='';
+  document.getElementById('p-desc').value='';
+  selColor=COLORS[0]; selProjStatus='active';
+  const cp = document.getElementById('color-picker');
+  cp.innerHTML = COLORS.map(c=>`<div onclick="pickColor('${c}',this)" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===selColor?'#fff':'transparent'};transition:transform .15s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform=''"></div>`).join('');
+  setProjStatus('active');
+  document.getElementById('overlay-proj').classList.add('show');
 }
-
-function chooseProject(id) {
-  state.currentProject = id;
+function pickColor(c,el) {
+  selColor=c;
+  document.querySelectorAll('#color-picker div').forEach(d=>d.style.borderColor='transparent');
+  el.style.borderColor='#fff';
+}
+function setProjStatus(s) {
+  selProjStatus=s;
+  document.getElementById('ps-active').className='seg-btn'+(s==='active'?' active-proj':'');
+  document.getElementById('ps-done').className='seg-btn'+(s==='done'?' active-proj':'');
+}
+function submitProject() {
+  const name=document.getElementById('p-name').value.trim();
+  if (!name) { alert('Veuillez entrer un nom.'); return; }
+  S.projects.push({id:uid(),name,color:selColor,desc:document.getElementById('p-desc').value.trim(),status:selProjStatus});
   save();
-  document.getElementById('overlay-ps').classList.remove('show');
-  render();
+  document.getElementById('overlay-proj').classList.remove('show');
+  render(); goToPage(1);
 }
 
-function populateProjectSelect() {
-  const sel = document.getElementById('tx-project');
-  sel.innerHTML = '<option value="">— Aucun projet —</option>' +
-    state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+// ─── UTILS ───────────────────────────────────────
+function populateProjSelect() {
+  document.getElementById('f-project').innerHTML='<option value="">— Aucun projet —</option>'+S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+function closeBg(e,id) {
+  if (e.target===document.getElementById(id)) document.getElementById(id).classList.remove('show');
+}
+function exportData() {
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='finflow-export.json'; a.click();
+}
+function importData(input) {
+  const file=input.files[0]; if (!file) return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try { S=JSON.parse(e.target.result); save(); render(); alert('Données importées !'); }
+    catch { alert('Fichier invalide.'); }
+  };
+  r.readAsText(file);
+}
+function clearAll() {
+  if (!confirm('Effacer TOUTES les données ? Cette action est irréversible.')) return;
+  S={projects:[],transactions:[],filter:null}; save(); render();
 }
 
-function closeOnBg(e, id) {
-  if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('show');
-}
-
-// ── INIT ──
+// ─── INIT ────────────────────────────────────────
 render();
 </script>
 </body>
