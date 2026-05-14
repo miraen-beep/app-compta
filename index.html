@@ -423,6 +423,58 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   padding:12px 20px;z-index:1000;cursor:pointer;
   display:none;
 }
+
+/* Corbeille badge */
+.trash-badge{
+  position:absolute;top:-4px;right:-4px;
+  width:18px;height:18px;border-radius:9px;
+  background:var(--red);color:#fff;
+  font-size:10px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+
+/* Toast notification */
+.toast{
+  position:fixed;bottom:calc(var(--nav) + var(--sb) + 14px);
+  left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);border-radius:24px;padding:10px 18px;
+  font-size:13px;font-weight:500;white-space:nowrap;
+  z-index:800;opacity:0;transition:opacity .2s,transform .2s;
+  pointer-events:none;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .undo-btn{
+  margin-left:10px;color:var(--accent);font-weight:700;cursor:pointer;
+  pointer-events:all;
+}
+
+/* Confirm dialog */
+.confirm-ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  z-index:700;display:none;align-items:center;justify-content:center;
+  padding:20px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+.confirm-ov.show{display:flex}
+.confirm-box{
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:var(--r);padding:24px 20px;width:100%;max-width:320px;
+  animation:scaleIn .2s cubic-bezier(.25,.46,.45,.94);
+}
+@keyframes scaleIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
+.confirm-icon{font-size:36px;text-align:center;margin-bottom:12px}
+.confirm-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;text-align:center;margin-bottom:6px}
+.confirm-msg{font-size:13px;color:var(--muted2);text-align:center;line-height:1.6;margin-bottom:20px}
+.confirm-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cb-cancel{height:46px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
+.cb-danger{height:46px;background:var(--red-bg);border:1px solid rgba(255,92,92,.3);border-radius:var(--rsm);color:var(--red);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
+
+/* Print bilan styles */
+@media print {
+  #nav,#fab-wrap,.fab-backdrop,#update-bar{display:none!important}
+  .panel{position:static!important;transform:none!important;overflow:visible!important}
+  body{background:#fff!important;color:#111!important}
+}
 </style>
 </head>
 <body>
@@ -506,6 +558,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
     </div>
     <div class="sh"><div class="sh-t">Application</div></div>
     <div class="card" id="app-info" style="font-size:13px;color:var(--muted);line-height:1.8"></div>
+    <div class="sh"><div class="sh-t">Corbeille</div></div>
+    <div class="card-flush">
+      <div class="txr" onclick="openTrash()">
+        <div class="tx-ico" style="background:var(--red-bg);font-size:18px">🗑️</div>
+        <div class="tx-inf">
+          <div class="tx-n">Corbeille</div>
+          <div class="tx-s" id="trash-count-label">Vide</div>
+        </div>
+        <span id="trash-count-badge" style="display:none;background:var(--red);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:10px;margin-right:6px"></span>
+        <span style="color:var(--muted);font-size:20px">&#8250;</span>
+      </div>
+    </div>
     <div class="sh"><div class="sh-t">Zone de danger</div></div>
     <div class="card">
       <button onclick="clearAll()" style="width:100%;height:44px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,92,92,.2);border-radius:var(--rsm);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer">Effacer toutes les donnees</button>
@@ -668,12 +732,40 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
   <img id="photo-img" src="" alt="">
 </div>
 
+<!-- CONFIRM DIALOG -->
+<div class="confirm-ov" id="confirm-ov">
+  <div class="confirm-box">
+    <div class="confirm-icon" id="confirm-icon">⚠️</div>
+    <div class="confirm-title" id="confirm-title">Confirmer</div>
+    <div class="confirm-msg" id="confirm-msg"></div>
+    <div class="confirm-btns">
+      <button class="cb-cancel" onclick="closeConfirm()">Annuler</button>
+      <button class="cb-danger" id="confirm-ok">Supprimer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- CORBEILLE PANEL -->
+<div class="panel" id="pan-trash">
+  <div class="panel-head">
+    <button class="back-btn" onclick="closePanel('pan-trash')">&#8249;</button>
+    <div class="panel-title">Corbeille</div>
+    <button onclick="emptyTrash()" id="trash-empty-btn" style="margin-left:auto;display:none;background:var(--red-bg);border:1px solid rgba(255,92,92,.25);color:var(--red);border-radius:var(--rxs);padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Vider</button>
+  </div>
+  <div class="panel-content" id="pan-trash-body"></div>
+</div>
+
 <script>
 // ══════════════════════════════════════════════
 // STATE
 // ══════════════════════════════════════════════
 const KEY = 'finflow3';
-let S = JSON.parse(localStorage.getItem(KEY)||'null') || {projects:[],transactions:[],filter:null};
+let S = JSON.parse(localStorage.getItem(KEY)||'null') || {projects:[],transactions:[],filter:null,trash:{projects:[],transactions:[]}};
+// migrate old saves without trash
+if (!S.trash) S.trash = {projects:[], transactions:[]};
 const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 
 const COLORS = ['#2ECC8F','#4A9EFF','#FF5C5C','#F5A623','#C8F060','#B06EFF','#FF7849','#00C4D4'];
@@ -834,11 +926,23 @@ function renderDocs() {
 
 function renderSettings() {
   const txs = S.transactions;
+  const trashTotal = (S.trash.projects.length + S.trash.transactions.length);
   document.getElementById('app-info').innerHTML = `
-    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)">FinFlow v3</div>
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)">FinFlow v5</div>
     <div>${S.projects.length} projet${S.projects.length!==1?'s':''} · ${txs.length} transaction${txs.length!==1?'s':''}</div>
     <div>${txs.filter(t=>t.fileData).length} piece${txs.filter(t=>t.fileData).length!==1?'s':''} jointe${txs.filter(t=>t.fileData).length!==1?'s':''}</div>
     <div style="margin-top:8px;font-size:12px">Donnees stockees localement sur cet appareil.</div>`;
+  // Trash count
+  const badge = document.getElementById('trash-count-badge');
+  const label = document.getElementById('trash-count-label');
+  if (trashTotal > 0) {
+    badge.textContent = trashTotal;
+    badge.style.display = 'inline-block';
+    label.textContent = `${trashTotal} element${trashTotal>1?'s':''} en attente de suppression`;
+  } else {
+    badge.style.display = 'none';
+    label.textContent = 'Vide';
+  }
 }
 
 function updateFilterPill() {
@@ -907,6 +1011,7 @@ function projCardHTML(p) {
       <button class="pcb" onclick="event.stopPropagation();toggleFilter('${p.id}')">${S.filter===p.id?'Retirer filtre':'Filtrer'}</button>
       <button class="pcb" onclick="event.stopPropagation();toggleDone('${p.id}')">${isDone?'Reactiver':'Terminer'}</button>
       <button class="pcb accent" onclick="event.stopPropagation();openBilan('${p.id}')">Bilan</button>
+      <button class="pcb" style="color:var(--red);border-color:rgba(255,92,92,.2)" onclick="event.stopPropagation();confirmDeleteProj('${p.id}')">🗑</button>
     </div>
   </div>`;
 }
@@ -1083,7 +1188,7 @@ function exportBilan() {
   const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
   const css = `
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap');
-    :root{--green:#1a7a4a;--red:#c0392b;--accent:#3d6b00;--border:#ddd;--surface:#f7f6f2;--surface2:#eeecea;--surface3:#e4e2dc;--muted:#777;--muted2:#444;--text:#1a1a18}
+    :root{--green:#1a7a4a;--red:#c0392b;--accent:#3d6b00;--border:#ddd;--surface:#f7f6f2;--surface2:#eeecea;--surface3:#e4e2dc;--muted:#777;--muted2:#444;--text:#1a1a18;--rsm:8px}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;color:var(--text);max-width:740px;margin:0 auto;padding:32px 28px;background:#fff;font-size:14px;line-height:1.6}
     .bilan-cover{background:var(--surface);padding:24px;margin-bottom:28px;border-left:4px solid var(--accent)}
@@ -1110,44 +1215,32 @@ function exportBilan() {
     .btx-amt{font-size:13px;font-weight:500}
     .chip{display:none}
     [style*="border-left:3px"]{border-left:3px solid #bbb!important;padding:12px 14px!important;font-size:12px!important;color:var(--muted)!important;background:var(--surface)!important}
-    @media print{body{padding:16px 20px}@page{margin:1.5cm}}`;
+    @media print{body{padding:16px 20px}@page{margin:1.5cm;size:A4}}`;
 
   const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
     <title>Bilan — ${p?.name||'Projet'}</title><style>${css}</style></head>
     <body>${body}
     <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid var(--border);padding-top:14px">
       Document genere par FinFlow · ${today}
-    </div></body></html>`;
-
-  // Build a Blob URL and open it — user taps Print from Safari Share sheet
-  // This avoids the iOS window.print() hang issue
-  const blob = new Blob([html], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-
-  // Show a full-screen overlay with the bilan as a preview + print button
-  let pov = document.getElementById('print-ov');
-  if (!pov) {
-    pov = document.createElement('div');
-    pov.id = 'print-ov';
-    pov.style.cssText = 'position:fixed;inset:0;z-index:2000;background:#fff;display:flex;flex-direction:column;';
-    document.body.appendChild(pov);
-  }
-  pov.innerHTML = `
-    <div style="display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,44px) + 10px) 16px 12px;background:#fff;border-bottom:1px solid #eee;flex-shrink:0">
-      <button onclick="closePrintOv()" style="width:36px;height:36px;border-radius:18px;border:1px solid #ddd;background:#f5f5f3;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8249;</button>
-      <span style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;flex:1">Apercu du bilan</span>
-      <a href="${url}" download="bilan-${(p?.name||'projet').replace(/\s+/g,'-')}.html"
-         style="background:#3d6b00;color:#fff;border:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px">
-         Telecharger
-      </a>
     </div>
-    <iframe src="${url}" style="flex:1;border:none;width:100%"></iframe>`;
-  pov.style.display = 'flex';
-}
+    <script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
+    </body></html>`;
 
-function closePrintOv() {
-  const pov = document.getElementById('print-ov');
-  if (pov) pov.style.display = 'none';
+  // Open print window
+  const printWin = window.open('', '_blank', 'width=800,height=900');
+  if (printWin) {
+    printWin.document.write(html);
+    printWin.document.close();
+  } else {
+    // Fallback: download as HTML if popup blocked
+    const blob = new Blob([html], {type:'text/html'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bilan-'+(p?.name||'projet').replace(/\s+/g,'-')+'.html';
+    a.click();
+    showToast('Popup bloquee — fichier telecharge, ouvrez-le et imprimez en PDF.');
+  }
 }
 
 // ══════════════════════════════════════════════
@@ -1323,10 +1416,29 @@ function submitTx() {
 }
 
 function deleteTx(id) {
-  if (!confirm('Supprimer cette operation ?')) return;
-  S.transactions = S.transactions.filter(t=>t.id!==id);
-  save(); render();
-  closePanel('pan-tx');
+  confirmDialog(
+    '🗑️', 'Supprimer cette operation ?',
+    'Elle sera placee dans la corbeille. Vous pourrez la restaurer depuis Reglages → Corbeille.',
+    'Supprimer',
+    () => {
+      const t = S.transactions.find(x=>x.id===id);
+      if (!t) return;
+      S.transactions = S.transactions.filter(x=>x.id!==id);
+      S.trash.transactions.push({...t, deletedAt: Date.now()});
+      save(); render();
+      closePanel('pan-tx');
+      showToast('Operation supprimee', () => {
+        // Undo
+        const idx = S.trash.transactions.findIndex(x=>x.id===id);
+        if (idx!==-1) {
+          const restored = S.trash.transactions.splice(idx,1)[0];
+          delete restored.deletedAt;
+          S.transactions.push(restored);
+          save(); render();
+        }
+      });
+    }
+  );
 }
 
 // ══════════════════════════════════════════════
@@ -1371,6 +1483,164 @@ function toggleFilter(id) {
 function toggleDone(id) {
   const p=S.projects.find(x=>x.id===id);
   if (p) { p.status=p.status==='done'?'active':'done'; save(); render(); }
+}
+
+function confirmDeleteProj(id) {
+  const p = S.projects.find(x=>x.id===id);
+  if (!p) return;
+  const txCount = S.transactions.filter(t=>t.project===id).length;
+  confirmDialog(
+    '🗑️',
+    `Supprimer "${esc(p.name)}" ?`,
+    txCount
+      ? `Ce projet contient ${txCount} transaction${txCount>1?'s':''}. Le projet et ses transactions seront places dans la corbeille.`
+      : 'Ce projet sera place dans la corbeille. Vous pourrez le restaurer depuis Reglages → Corbeille.',
+    'Supprimer',
+    () => {
+      const proj = S.projects.find(x=>x.id===id);
+      const txs = S.transactions.filter(t=>t.project===id);
+      S.projects = S.projects.filter(x=>x.id!==id);
+      S.transactions = S.transactions.filter(t=>t.project!==id);
+      S.trash.projects.push({...proj, deletedAt: Date.now(), _trashedTxIds: txs.map(t=>t.id)});
+      txs.forEach(t=>S.trash.transactions.push({...t, deletedAt: Date.now()}));
+      if (S.filter===id) S.filter=null;
+      save(); render();
+      showToast(`Projet supprime`, () => {
+        // Undo
+        const pidx = S.trash.projects.findIndex(x=>x.id===id);
+        if (pidx!==-1) {
+          const rp = S.trash.projects.splice(pidx,1)[0];
+          const txIds = rp._trashedTxIds||[];
+          delete rp.deletedAt; delete rp._trashedTxIds;
+          S.projects.push(rp);
+          txIds.forEach(tid=>{
+            const tidx=S.trash.transactions.findIndex(x=>x.id===tid);
+            if(tidx!==-1){const rt=S.trash.transactions.splice(tidx,1)[0];delete rt.deletedAt;S.transactions.push(rt);}
+          });
+          save(); render();
+        }
+      });
+    }
+  );
+}
+
+// ══════════════════════════════════════════════
+// CONFIRM DIALOG
+// ══════════════════════════════════════════════
+let _confirmCb = null;
+function confirmDialog(icon, title, msg, btnLabel, cb) {
+  document.getElementById('confirm-icon').textContent = icon;
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-msg').innerHTML = msg;
+  document.getElementById('confirm-ok').textContent = btnLabel;
+  _confirmCb = cb;
+  document.getElementById('confirm-ok').onclick = () => { closeConfirm(); cb(); };
+  document.getElementById('confirm-ov').classList.add('show');
+}
+function closeConfirm() {
+  document.getElementById('confirm-ov').classList.remove('show');
+  _confirmCb = null;
+}
+
+// ══════════════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════════════
+let _toastTimer = null;
+function showToast(msg, undoCb) {
+  const t = document.getElementById('toast');
+  t.innerHTML = msg + (undoCb ? ` <span class="undo-btn" onclick="toastUndo()">Annuler</span>` : '');
+  t._undoCb = undoCb || null;
+  t.classList.add('show');
+  if (_toastTimer) clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(() => t.classList.remove('show'), 4500);
+}
+function toastUndo() {
+  const t = document.getElementById('toast');
+  t.classList.remove('show');
+  if (t._undoCb) { t._undoCb(); t._undoCb=null; }
+  if (_toastTimer) clearTimeout(_toastTimer);
+}
+
+// ══════════════════════════════════════════════
+// CORBEILLE
+// ══════════════════════════════════════════════
+function openTrash() {
+  renderTrashPanel();
+  openPanel('pan-trash');
+}
+
+function renderTrashPanel() {
+  const tp = S.trash.projects;
+  const tt = S.trash.transactions;
+  const total = tp.length + tt.length;
+  document.getElementById('trash-empty-btn').style.display = total ? 'block' : 'none';
+
+  if (!total) {
+    document.getElementById('pan-trash-body').innerHTML = `<div class="empty"><div class="empty-i">🗑️</div><div class="empty-t">La corbeille est vide</div></div>`;
+    return;
+  }
+
+  let html = '';
+  if (tp.length) {
+    html += `<div class="sh"><div class="sh-t">Projets (${tp.length})</div></div><div class="card-flush">`;
+    html += tp.map(p=>`
+      <div class="txr">
+        <div class="tx-ico" style="background:${p.color}22;color:${p.color};width:38px;height:38px;border-radius:11px;font-size:18px">📁</div>
+        <div class="tx-inf">
+          <div class="tx-n">${esc(p.name)}</div>
+          <div class="tx-s">Supprime le ${new Date(p.deletedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'})}</div>
+        </div>
+        <button onclick="restoreProject('${p.id}')" style="background:var(--green-bg);border:1px solid rgba(46,204,143,.2);color:var(--green);border-radius:var(--rxs);padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0">Restaurer</button>
+      </div>`).join('');
+    html += '</div>';
+  }
+  if (tt.length) {
+    html += `<div class="sh"><div class="sh-t">Transactions (${tt.length})</div></div><div class="card-flush">`;
+    html += tt.map(t=>`
+      <div class="txr">
+        <div class="tx-ico ${t.type}">${t.type==='in'?'↑':'↓'}</div>
+        <div class="tx-inf">
+          <div class="tx-n">${esc(t.desc||'Sans titre')}</div>
+          <div class="tx-s">${fmt(t.amount)} · Supprime le ${new Date(t.deletedAt).toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}</div>
+        </div>
+        <button onclick="restoreTx('${t.id}')" style="background:var(--green-bg);border:1px solid rgba(46,204,143,.2);color:var(--green);border-radius:var(--rxs);padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;flex-shrink:0">Restaurer</button>
+      </div>`).join('');
+    html += '</div>';
+  }
+  document.getElementById('pan-trash-body').innerHTML = html;
+}
+
+function restoreProject(id) {
+  const idx = S.trash.projects.findIndex(x=>x.id===id);
+  if (idx===-1) return;
+  const p = S.trash.projects.splice(idx,1)[0];
+  const txIds = p._trashedTxIds||[];
+  delete p.deletedAt; delete p._trashedTxIds;
+  S.projects.push(p);
+  txIds.forEach(tid=>{
+    const tidx=S.trash.transactions.findIndex(x=>x.id===tid);
+    if(tidx!==-1){const rt=S.trash.transactions.splice(tidx,1)[0];delete rt.deletedAt;S.transactions.push(rt);}
+  });
+  save(); render(); renderTrashPanel();
+  showToast('Projet restaure ✓');
+}
+
+function restoreTx(id) {
+  const idx = S.trash.transactions.findIndex(x=>x.id===id);
+  if (idx===-1) return;
+  const t = S.trash.transactions.splice(idx,1)[0];
+  delete t.deletedAt;
+  S.transactions.push(t);
+  save(); render(); renderTrashPanel();
+  showToast('Transaction restauree ✓');
+}
+
+function emptyTrash() {
+  confirmDialog('🗑️','Vider la corbeille ?','Toutes les donnees supprimees seront definitivement perdues. Cette action est irreversible.','Vider definitivemet',()=>{
+    S.trash={projects:[],transactions:[]};
+    save(); renderTrashPanel(); renderSettings();
+    showToast('Corbeille videe');
+  });
 }
 
 // ══════════════════════════════════════════════
