@@ -1,4 +1,4 @@
-const CACHE = 'finflow-v8';
+const CACHE = 'finflow-v10';
 const ASSETS = ['./index.html', './manifest.json'];
 
 self.addEventListener('install', e => {
