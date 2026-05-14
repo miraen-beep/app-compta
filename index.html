@@ -576,6 +576,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
           <img id="up-prev" class="up-prev">
           <div id="up-pdf" class="up-pdf">Document PDF joint</div>
           <div id="up-none" class="up-none">Aucune piece jointe</div>
+          <button id="up-remove" onclick="removeFile()" style="display:none;margin-top:8px;width:100%;height:36px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,92,92,.2);border-radius:var(--rsm);font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer">Supprimer la piece jointe</button>
         </div>
       </div>
 
@@ -600,7 +601,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
         </div>
       </div>
 
-      <button class="submit" onclick="submitTx()">Enregistrer</button>
+      <button class="submit" id="tx-submit-btn" onclick="submitTx()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -923,34 +924,50 @@ function openTxDetail(id) {
   let html = `
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
       <div class="tx-ico ${t.type}" style="width:52px;height:52px;border-radius:14px;font-size:22px">${t.type==='in'?'&#8593;':'&#8595;'}</div>
-      <div>
-        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700">${fmt(t.amount)}</div>
+      <div style="flex:1">
+        <div style="font-family:'Syne',sans-serif;font-size:26px;font-weight:700;letter-spacing:-.5px">${fmt(t.amount)}</div>
         <div style="font-size:13px;color:var(--muted)">${t.type==='in'?'Entree':'Sortie'}</div>
       </div>
     </div>
-    <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-bottom:20px">
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+      <button onclick="openEditModal('${t.id}')" style="height:44px;background:var(--accent-dim);border:1px solid rgba(200,240,96,.25);border-radius:var(--rsm);color:var(--accent);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">
+        Modifier
+      </button>
+      <button onclick="deleteTx('${t.id}')" style="height:44px;background:var(--red-bg);border:1px solid rgba(255,92,92,.2);border-radius:var(--rsm);color:var(--red);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer">
+        Supprimer
+      </button>
+    </div>
+
+    <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-bottom:16px">
       ${row('Description', esc(t.desc||'—'))}
       ${row('Date', fmtD(t.date))}
       ${row('Projet', proj?`<span class="chip" style="background:${proj.color}22;color:${proj.color}">${esc(proj.name)}</span>`:'—')}
       ${t.notes?row('Notes', esc(t.notes)):''}
       ${t.ref?row('Reference', esc(t.ref)):''}
-      ${t.vendor?row('Emetteur', esc(t.vendor)):''}
-      ${t.docType?row('Type document', dtLabel):''}
-      ${t.invStatus?row('Statut', statusLabel):''}
+      ${t.vendor?row('Emetteur / Fournisseur', esc(t.vendor)):''}
+      ${t.docType?row('Type de piece', dtLabel):''}
+      ${t.invStatus?row('Statut paiement', statusLabel):''}
     </div>`;
 
   if (t.fileData) {
     if (t.fileType==='pdf') {
-      html += `<div style="background:var(--amber-bg);border-radius:var(--rsm);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
-        <div style="font-size:24px">PDF</div>
-        <div><div style="font-size:14px;font-weight:500">${esc(t.fileName||'Document.pdf')}</div><div style="font-size:12px;color:var(--muted)">Piece jointe PDF</div></div>
+      html += `<div style="background:var(--amber-bg);border:1px solid rgba(245,166,35,.2);border-radius:var(--rsm);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px;width:40px;text-align:center">&#128196;</div>
+        <div>
+          <div style="font-size:14px;font-weight:500">${esc(t.fileName||'Document.pdf')}</div>
+          <div style="font-size:12px;color:var(--muted)">Piece jointe PDF</div>
+        </div>
       </div>`;
     } else {
-      html += `<img src="${t.fileData}" onclick="viewPhoto('${t.id}')" style="width:100%;border-radius:var(--rsm);margin-bottom:16px;cursor:pointer;display:block">`;
+      html += `<img src="${t.fileData}" onclick="viewPhoto('${t.id}')" style="width:100%;border-radius:var(--rsm);margin-bottom:16px;cursor:pointer;display:block;border:1px solid var(--border)">`;
     }
+  } else {
+    html += `<div style="border:1px dashed var(--border2);border-radius:var(--rsm);padding:16px;text-align:center;margin-bottom:16px;cursor:pointer" onclick="openEditModal('${t.id}')">
+      <div style="font-size:22px;margin-bottom:6px">&#128206;</div>
+      <div style="font-size:13px;color:var(--muted)">Aucune piece jointe · Appuyer pour en ajouter une</div>
+    </div>`;
   }
-
-  html += `<button class="del-btn" style="width:100%;height:44px;font-size:14px" onclick="deleteTx('${t.id}')">Supprimer cette operation</button>`;
 
   document.getElementById('pan-tx-title').textContent = t.desc||'Detail';
   document.getElementById('pan-tx-body').innerHTML = html;
@@ -1064,30 +1081,26 @@ function exportBilan() {
   const p = S.projects.find(x=>x.id===curBilanId);
   const body = document.getElementById('pan-bilan-body').innerHTML;
   const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
-  const w = window.open('','_blank');
-  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-  <title>Bilan — ${p?.name}</title>
-  <style>
+  const css = `
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap');
-    :root{--green:#1a7a4a;--red:#c0392b;--accent:#5a8a00;--border:#e0ddd5;--bg:#fff;--surface:#f8f7f3;--surface2:#f0efe9;--surface3:#e8e7e0;--muted:#888;--muted2:#555;--text:#1a1a18}
+    :root{--green:#1a7a4a;--red:#c0392b;--accent:#3d6b00;--border:#ddd;--surface:#f7f6f2;--surface2:#eeecea;--surface3:#e4e2dc;--muted:#777;--muted2:#444;--text:#1a1a18}
     *{box-sizing:border-box;margin:0;padding:0}
-    body{font-family:'DM Sans',sans-serif;color:var(--text);max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;font-size:14px;line-height:1.6}
-    .bilan-cover{background:var(--surface);border-radius:10px;padding:24px;margin-bottom:24px;border-left:4px solid var(--accent)}
+    body{font-family:'DM Sans',sans-serif;color:var(--text);max-width:740px;margin:0 auto;padding:32px 28px;background:#fff;font-size:14px;line-height:1.6}
+    .bilan-cover{background:var(--surface);padding:24px;margin-bottom:28px;border-left:4px solid var(--accent)}
     .bilan-proj{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:4px}
-    .bilan-date{font-size:12px;color:var(--muted);margin-bottom:16px}
+    .bilan-date{font-size:12px;color:var(--muted);margin-bottom:18px}
     .bilan-net-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
-    .bilan-net{font-family:'Syne',sans-serif;font-size:36px;font-weight:700}
+    .bilan-net{font-family:'Syne',sans-serif;font-size:34px;font-weight:700}
     .bilan-net.pos{color:var(--accent)} .bilan-net.neg{color:var(--red)}
     .prog-wrap{margin:14px 0 0}
     .prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
-    .prog{height:5px;background:var(--surface3);border-radius:3px}
-    .prog-fill{height:100%;border-radius:3px;background:var(--green)}
-    .prog-fill.warn{background:#b07800} .prog-fill.danger{background:var(--red)}
+    .prog{height:5px;background:var(--surface3)}
+    .prog-fill{height:100%;background:#2d7a2d}
+    .prog-fill.warn{background:#8a6000} .prog-fill.danger{background:var(--red)}
     .bilan-section{margin-bottom:24px}
-    .bilan-sec-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding-bottom:8px;border-bottom:1.5px solid var(--border);margin-bottom:0}
-    .bilan-total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--surface)}
-    .bilan-total-row:nth-child(2){background:var(--surface2)}
-    .bilan-total-row:nth-child(4){background:var(--surface3)}
+    .bilan-sec-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding-bottom:7px;border-bottom:1.5px solid var(--border);margin-bottom:0}
+    .bilan-total-row{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--surface);border-bottom:1px solid var(--border)}
+    .bilan-total-row:last-child{background:var(--surface2);border-bottom:none}
     .bilan-total-lbl{font-size:13px;font-weight:600}
     .bilan-total-val{font-size:15px;font-weight:700}
     .bilan-tx-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)}
@@ -1095,26 +1108,56 @@ function exportBilan() {
     .btx-lbl{font-size:13px;max-width:65%}
     .btx-sub{font-size:11px;color:var(--muted)}
     .btx-amt{font-size:13px;font-weight:500}
-    div[style*="border-left:3px"]{border-left:3px solid #ccc!important;background:var(--surface)!important;border-radius:6px!important;padding:14px!important;font-size:12px!important;color:var(--muted)!important}
-    @media print{body{padding:20px}}
-    .chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
-    .chip.g{background:#e8f5ee;color:var(--green)}
-    .chip.m{background:var(--surface2);color:var(--muted2)}
-  </style></head>
-  <body>${body}
-  <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid var(--border);padding-top:16px">
-    Document genere par FinFlow le ${today}
-  </div>
-  <script>window.onload=()=>window.print()<\/script>
-  </body></html>`);
-  w.document.close();
+    .chip{display:none}
+    [style*="border-left:3px"]{border-left:3px solid #bbb!important;padding:12px 14px!important;font-size:12px!important;color:var(--muted)!important;background:var(--surface)!important}
+    @media print{body{padding:16px 20px}@page{margin:1.5cm}}`;
+
+  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+    <title>Bilan — ${p?.name||'Projet'}</title><style>${css}</style></head>
+    <body>${body}
+    <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid var(--border);padding-top:14px">
+      Document genere par FinFlow · ${today}
+    </div></body></html>`;
+
+  // Build a Blob URL and open it — user taps Print from Safari Share sheet
+  // This avoids the iOS window.print() hang issue
+  const blob = new Blob([html], {type:'text/html'});
+  const url = URL.createObjectURL(blob);
+
+  // Show a full-screen overlay with the bilan as a preview + print button
+  let pov = document.getElementById('print-ov');
+  if (!pov) {
+    pov = document.createElement('div');
+    pov.id = 'print-ov';
+    pov.style.cssText = 'position:fixed;inset:0;z-index:2000;background:#fff;display:flex;flex-direction:column;';
+    document.body.appendChild(pov);
+  }
+  pov.innerHTML = `
+    <div style="display:flex;align-items:center;gap:10px;padding:calc(env(safe-area-inset-top,44px) + 10px) 16px 12px;background:#fff;border-bottom:1px solid #eee;flex-shrink:0">
+      <button onclick="closePrintOv()" style="width:36px;height:36px;border-radius:18px;border:1px solid #ddd;background:#f5f5f3;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">&#8249;</button>
+      <span style="font-family:'Syne',sans-serif;font-size:17px;font-weight:700;flex:1">Apercu du bilan</span>
+      <a href="${url}" download="bilan-${(p?.name||'projet').replace(/\s+/g,'-')}.html"
+         style="background:#3d6b00;color:#fff;border:none;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px">
+         Telecharger
+      </a>
+    </div>
+    <iframe src="${url}" style="flex:1;border:none;width:100%"></iframe>`;
+  pov.style.display = 'flex';
+}
+
+function closePrintOv() {
+  const pov = document.getElementById('print-ov');
+  if (pov) pov.style.display = 'none';
 }
 
 // ══════════════════════════════════════════════
-// TX MODAL
+// TX MODAL — CREATE & EDIT
 // ══════════════════════════════════════════════
+let editingId = null; // null = create, string = edit
+
 function openTxModal(type) {
   closeFab();
+  editingId = null;
   setTxType(type);
   document.getElementById('tx-desc').value='';
   document.getElementById('tx-amt').value='';
@@ -1127,12 +1170,57 @@ function openTxModal(type) {
   pendingFile = null;
   resetUploadUI();
   populateProjSel();
+  document.getElementById('tx-modal-title').textContent = type==='in' ? 'Nouvelle entree' : 'Nouvelle sortie';
+  document.getElementById('tx-submit-btn').textContent = 'Enregistrer';
+  document.getElementById('ov-tx').classList.add('show');
+}
+
+function openEditModal(id) {
+  const t = S.transactions.find(x=>x.id===id);
+  if (!t) return;
+  editingId = id;
+
+  populateProjSel();
+  setTxType(t.type);
+  document.getElementById('tx-modal-title').textContent = 'Modifier la transaction';
+  document.getElementById('tx-desc').value = t.desc||'';
+  document.getElementById('tx-amt').value = t.amount||'';
+  document.getElementById('tx-date').value = t.date||'';
+  document.getElementById('tx-notes').value = t.notes||'';
+  document.getElementById('tx-ref').value = t.ref||'';
+  document.getElementById('tx-vendor').value = t.vendor||'';
+  document.getElementById('tx-proj').value = t.project||'';
+  document.getElementById('tx-inv-status').value = t.invStatus||'paid';
+  document.getElementById('tx-doc-type').value = t.docType||'invoice';
+
+  // Restore existing file state
+  pendingFile = null; // will use existing if no new file chosen
+  if (t.fileData) {
+    document.getElementById('up-none').style.display='none';
+    document.getElementById('inv-fields').style.display='block';
+    document.getElementById('up-remove').style.display='block';
+    if (t.fileType==='pdf') {
+      document.getElementById('up-pdf').style.display='block';
+      document.getElementById('up-pdf').textContent='PDF joint : '+(t.fileName||'document.pdf')+' (conserver ou remplacer ci-dessous)';
+      document.getElementById('up-prev').style.display='none';
+    } else {
+      document.getElementById('up-prev').src=t.fileData;
+      document.getElementById('up-prev').style.display='block';
+      document.getElementById('up-pdf').style.display='none';
+    }
+  } else {
+    resetUploadUI();
+  }
+
+  document.getElementById('tx-submit-btn').textContent = 'Enregistrer les modifications';
+
+  // Close detail panel, open modal
+  closePanel('pan-tx');
   document.getElementById('ov-tx').classList.add('show');
 }
 
 function setTxType(t) {
   selTxType = t;
-  document.getElementById('tx-modal-title').textContent = t==='in' ? 'Nouvelle entree' : 'Nouvelle sortie';
   document.getElementById('sb-in').className = 'sb-'+(t==='in'?' ai':'');
   document.getElementById('sb-out').className = 'sb-'+(t==='out'?' ao':'');
 }
@@ -1141,6 +1229,17 @@ function resetUploadUI() {
   document.getElementById('up-prev').style.display='none';
   document.getElementById('up-prev').src='';
   document.getElementById('up-pdf').style.display='none';
+  document.getElementById('up-none').style.display='block';
+  document.getElementById('up-remove').style.display='none';
+  document.getElementById('inv-fields').style.display='none';
+}
+
+function removeFile() {
+  // Mark file for removal on save
+  pendingFile = 'REMOVE';
+  document.getElementById('up-prev').style.display='none';
+  document.getElementById('up-pdf').style.display='none';
+  document.getElementById('up-remove').style.display='none';
   document.getElementById('up-none').style.display='block';
   document.getElementById('inv-fields').style.display='none';
 }
@@ -1152,6 +1251,7 @@ function handleUpload(e) {
     const isPdf = file.type==='application/pdf';
     pendingFile = {data:ev.target.result, type:isPdf?'pdf':'image', name:file.name};
     document.getElementById('up-none').style.display='none';
+    document.getElementById('up-remove').style.display='block';
     document.getElementById('inv-fields').style.display='block';
     if (isPdf) {
       document.getElementById('up-pdf').style.display='block';
@@ -1171,20 +1271,52 @@ function submitTx() {
   const amount = parseFloat(document.getElementById('tx-amt').value);
   if (!desc) { alert('Veuillez entrer une description.'); return; }
   if (!amount || amount<=0) { alert('Montant invalide.'); return; }
-  const tx = {
-    id:uid(), type:selTxType, desc, amount,
-    project:document.getElementById('tx-proj').value||null,
-    date:document.getElementById('tx-date').value,
-    notes:document.getElementById('tx-notes').value.trim(),
-    fileData:pendingFile?.data||null,
-    fileType:pendingFile?.type||null,
-    fileName:pendingFile?.name||null,
-    docType:pendingFile?document.getElementById('tx-doc-type').value:null,
-    ref:document.getElementById('tx-ref').value.trim()||null,
-    vendor:document.getElementById('tx-vendor').value.trim()||null,
-    invStatus:pendingFile?document.getElementById('tx-inv-status').value:null,
-  };
-  S.transactions.push(tx);
+
+  const hasNewFile = pendingFile !== null && pendingFile !== 'REMOVE';
+  const removeFile = pendingFile === 'REMOVE';
+  const docTypeVal = document.getElementById('tx-doc-type').value;
+  const refVal = document.getElementById('tx-ref').value.trim()||null;
+  const vendorVal = document.getElementById('tx-vendor').value.trim()||null;
+  const statusVal = document.getElementById('tx-inv-status').value;
+
+  if (editingId) {
+    // UPDATE existing
+    const idx = S.transactions.findIndex(t=>t.id===editingId);
+    if (idx===-1) return;
+    const existing = S.transactions[idx];
+    const fileData = removeFile ? null : (hasNewFile ? pendingFile.data : existing.fileData);
+    const fileType = removeFile ? null : (hasNewFile ? pendingFile.type : existing.fileType);
+    const fileName = removeFile ? null : (hasNewFile ? pendingFile.name : existing.fileName);
+    const hasFile = !!fileData;
+    S.transactions[idx] = {
+      ...existing,
+      type: selTxType, desc, amount,
+      project: document.getElementById('tx-proj').value||null,
+      date: document.getElementById('tx-date').value,
+      notes: document.getElementById('tx-notes').value.trim(),
+      fileData, fileType, fileName,
+      docType: hasFile ? docTypeVal : null,
+      ref: refVal, vendor: vendorVal,
+      invStatus: hasFile ? statusVal : null,
+    };
+  } else {
+    // CREATE new
+    const tx = {
+      id:uid(), type:selTxType, desc, amount,
+      project:document.getElementById('tx-proj').value||null,
+      date:document.getElementById('tx-date').value,
+      notes:document.getElementById('tx-notes').value.trim(),
+      fileData:hasNewFile?pendingFile.data:null,
+      fileType:hasNewFile?pendingFile.type:null,
+      fileName:hasNewFile?pendingFile.name:null,
+      docType:hasNewFile?docTypeVal:null,
+      ref:refVal, vendor:vendorVal,
+      invStatus:hasNewFile?statusVal:null,
+    };
+    S.transactions.push(tx);
+  }
+
+  document.getElementById('tx-submit-btn').textContent = 'Enregistrer';
   save();
   document.getElementById('ov-tx').classList.remove('show');
   render();
