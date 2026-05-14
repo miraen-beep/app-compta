@@ -1191,12 +1191,12 @@ function exportBilan() {
     :root{--green:#1a7a4a;--red:#c0392b;--accent:#3d6b00;--border:#ddd;--surface:#f7f6f2;--surface2:#eeecea;--surface3:#e4e2dc;--muted:#777;--muted2:#444;--text:#1a1a18;--rsm:8px}
     *{box-sizing:border-box;margin:0;padding:0}
     body{font-family:'DM Sans',sans-serif;color:var(--text);max-width:740px;margin:0 auto;padding:32px 28px;background:#fff;font-size:14px;line-height:1.6}
-    .bilan-cover{background:var(--surface);padding:24px;margin-bottom:28px;border-left:4px solid var(--accent)}
+    .bilan-cover{background:var(--surface);padding:24px;margin-bottom:28px;border-left:4px solid #3d6b00}
     .bilan-proj{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:4px}
     .bilan-date{font-size:12px;color:var(--muted);margin-bottom:18px}
     .bilan-net-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
     .bilan-net{font-family:'Syne',sans-serif;font-size:34px;font-weight:700}
-    .bilan-net.pos{color:var(--accent)} .bilan-net.neg{color:var(--red)}
+    .bilan-net.pos{color:#3d6b00} .bilan-net.neg{color:var(--red)}
     .prog-wrap{margin:14px 0 0}
     .prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
     .prog{height:5px;background:var(--surface3)}
@@ -1215,32 +1215,55 @@ function exportBilan() {
     .btx-amt{font-size:13px;font-weight:500}
     .chip{display:none}
     [style*="border-left:3px"]{border-left:3px solid #bbb!important;padding:12px 14px!important;font-size:12px!important;color:var(--muted)!important;background:var(--surface)!important}
-    @media print{body{padding:16px 20px}@page{margin:1.5cm;size:A4}}`;
+    @media print{
+      .no-print{display:none!important}
+      body{padding:16px 20px}
+      @page{margin:1.5cm;size:A4}
+    }`;
 
-  const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
-    <title>Bilan — ${p?.name||'Projet'}</title><style>${css}</style></head>
-    <body>${body}
-    <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid var(--border);padding-top:14px">
-      Document genere par FinFlow · ${today}
+  const printContent = `
+    <div class="no-print" style="position:sticky;top:0;background:#fff;border-bottom:1px solid #e0e0e0;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:10">
+      <button onclick="document.getElementById('finflow-print-ov').style.display='none'" style="width:36px;height:36px;border-radius:18px;border:1px solid #ddd;background:#f5f5f3;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#8249;</button>
+      <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;flex:1;color:#1a1a18">Apercu du bilan</span>
+      <button onclick="window.print()" style="background:#3d6b00;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">
+        🖨️ Imprimer / PDF
+      </button>
     </div>
-    <script>window.onload=function(){setTimeout(function(){window.print();},400);}<\/script>
-    </body></html>`;
+    <div style="padding:24px 16px 40px;max-width:700px;margin:0 auto">
+      ${body}
+      <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid #eee;padding-top:14px">
+        Document genere par FinFlow · ${today}
+      </div>
+    </div>`;
 
-  // Open print window
-  const printWin = window.open('', '_blank', 'width=800,height=900');
-  if (printWin) {
-    printWin.document.write(html);
-    printWin.document.close();
-  } else {
-    // Fallback: download as HTML if popup blocked
-    const blob = new Blob([html], {type:'text/html'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'bilan-'+(p?.name||'projet').replace(/\s+/g,'-')+'.html';
-    a.click();
-    showToast('Popup bloquee — fichier telecharge, ouvrez-le et imprimez en PDF.');
+  // Overlay in-app — works in PWA standalone mode on iOS
+  let ov = document.getElementById('finflow-print-ov');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'finflow-print-ov';
+    ov.style.cssText = [
+      'position:fixed','inset:0','z-index:2000',
+      'background:#fff','overflow-y:auto','-webkit-overflow-scrolling:touch',
+      'font-family:DM Sans,sans-serif','color:#1a1a18'
+    ].join(';');
+    // Inject print-specific CSS into the main document once
+    if (!document.getElementById('bilan-print-style')) {
+      const s = document.createElement('style');
+      s.id = 'bilan-print-style';
+      s.textContent = `
+        @media print {
+          body > *:not(#finflow-print-ov) { display: none !important; }
+          #finflow-print-ov { position:static !important; overflow:visible !important; }
+          #finflow-print-ov .no-print { display:none !important; }
+          ${css}
+        }`;
+      document.head.appendChild(s);
+    }
+    document.body.appendChild(ov);
   }
+  ov.innerHTML = `<style>${css.replace(/@media print[\s\S]*?}/,'')}</style>${printContent}`;
+  ov.style.display = 'block';
+  ov.scrollTop = 0;
 }
 
 // ══════════════════════════════════════════════
