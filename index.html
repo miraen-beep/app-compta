@@ -6,9 +6,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinFlow">
+<link rel="manifest" href="manifest.json">
 <title>FinFlow</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,400&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap');
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 
@@ -16,225 +17,264 @@
   --bg:#0F0F0E;
   --surface:#1A1A18;
   --surface2:#232320;
-  --surface3:#2A2A27;
+  --surface3:#2E2E2B;
   --border:rgba(255,255,255,0.07);
-  --border2:rgba(255,255,255,0.12);
+  --border2:rgba(255,255,255,0.13);
   --text:#F0EFE8;
-  --muted:#7A7A72;
+  --muted:#6E6E68;
   --muted2:#9A9A90;
   --green:#2ECC8F;
-  --green-bg:rgba(46,204,143,0.12);
+  --green-bg:rgba(46,204,143,0.11);
   --red:#FF5C5C;
-  --red-bg:rgba(255,92,92,0.12);
+  --red-bg:rgba(255,92,92,0.11);
   --amber:#F5A623;
-  --amber-bg:rgba(245,166,35,0.12);
+  --amber-bg:rgba(245,166,35,0.11);
   --blue:#4A9EFF;
-  --blue-bg:rgba(74,158,255,0.12);
+  --blue-bg:rgba(74,158,255,0.11);
   --accent:#C8F060;
-  --accent-dim:rgba(200,240,96,0.15);
-  --radius:18px;
-  --radius-sm:12px;
-  --radius-xs:8px;
-  --nav-h:72px;
-  --safe-bottom:env(safe-area-inset-bottom,0px);
+  --accent-dim:rgba(200,240,96,0.13);
+  --r:18px;--rsm:12px;--rxs:8px;
+  --nav:72px;
+  --sb:env(safe-area-inset-bottom,0px);
+  --st:env(safe-area-inset-top,44px);
 }
 
-html,body{height:100%;overflow:hidden;background:var(--bg)}
-body{font-family:'DM Sans',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased}
+html,body{height:100%;background:var(--bg);overflow:hidden}
+body{font-family:'DM Sans',sans-serif;color:var(--text);-webkit-font-smoothing:antialiased;user-select:none}
 
-/* ── SWIPE WRAPPER ── */
-#pages-wrapper{
+/* ════════════════════════════════
+   SWIPE ENGINE — native feel
+════════════════════════════════ */
+#deck{
   display:flex;width:500%;height:100%;
-  transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);
+  transform:translateX(0);
   will-change:transform;
 }
-.page{width:20%;height:100%;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(var(--nav-h) + var(--safe-bottom) + 20px)}
+#deck.animating{transition:transform .32s cubic-bezier(0.25,0.46,0.45,0.94)}
+.page{
+  width:20%;height:100%;
+  overflow-y:auto;overflow-x:hidden;
+  -webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--nav) + var(--sb) + 16px);
+}
 
-/* ── BOTTOM NAV ── */
-#bottom-nav{
+/* ════════════════════════════════
+   BOTTOM NAV
+════════════════════════════════ */
+#nav{
   position:fixed;bottom:0;left:0;right:0;
-  height:calc(var(--nav-h) + var(--safe-bottom));
-  background:rgba(15,15,14,0.92);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  height:calc(var(--nav) + var(--sb));
+  background:rgba(12,12,11,0.94);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
   border-top:1px solid var(--border);
-  display:flex;align-items:flex-start;padding-top:10px;
-  z-index:200;
+  display:flex;align-items:flex-start;padding-top:8px;
+  z-index:500;
 }
-.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:4px 0;transition:opacity .15s}
-.nav-item:active{opacity:.6}
-.nav-icon{font-size:22px;line-height:1;transition:transform .2s}
-.nav-label{font-size:10px;font-weight:500;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;transition:color .2s}
-.nav-item.active .nav-label{color:var(--accent)}
-.nav-item.active .nav-icon{transform:scale(1.1)}
-
-/* ── FAB ── */
-.fab-wrap{
-  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 12px);right:16px;
-  display:flex;flex-direction:column;gap:8px;align-items:flex-end;z-index:190;
+.ni{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  gap:3px;cursor:pointer;padding:4px 0;
 }
-.fab-main{
-  width:56px;height:56px;border-radius:28px;
-  background:var(--accent);color:#0F0F0E;
-  border:none;font-size:26px;font-weight:700;
+.ni:active{opacity:.5}
+.ni-ico{
+  width:28px;height:28px;border-radius:8px;
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;transition:transform .15s,box-shadow .15s;
-  box-shadow:0 4px 20px rgba(200,240,96,0.35);
+  font-size:16px;transition:background .2s,transform .2s;
 }
-.fab-main:active{transform:scale(0.93)}
-.fab-mini{
-  display:flex;align-items:center;gap:10px;
+.ni.active .ni-ico{background:var(--accent-dim);transform:scale(1.05)}
+.ni-lbl{
+  font-size:10px;font-weight:500;color:var(--muted);
+  letter-spacing:.04em;text-transform:uppercase;transition:color .2s;
+}
+.ni.active .ni-lbl{color:var(--accent)}
+
+/* ════════════════════════════════
+   FAB
+════════════════════════════════ */
+#fab-wrap{
+  position:fixed;right:16px;
+  bottom:calc(var(--nav) + var(--sb) + 10px);
+  display:flex;flex-direction:column;align-items:flex-end;gap:8px;
+  z-index:490;
+}
+#fab{
+  width:52px;height:52px;border-radius:26px;
+  background:var(--accent);color:#0F0F0E;border:none;
+  font-size:24px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 18px rgba(200,240,96,.3);
+  transition:transform .18s;
+}
+#fab:active{transform:scale(.93)}
+.fmini{
+  display:flex;align-items:center;gap:10px;white-space:nowrap;
   background:var(--surface2);border:1px solid var(--border2);
-  border-radius:28px;padding:10px 16px 10px 12px;
+  border-radius:24px;padding:9px 16px 9px 12px;
   font-size:13px;font-weight:500;color:var(--text);
-  cursor:pointer;transition:all .15s;white-space:nowrap;
-  box-shadow:0 4px 16px rgba(0,0,0,0.4);
+  cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.45);
 }
-.fab-mini:active{transform:scale(0.96)}
-.fab-mini-icon{font-size:18px}
-#fab-menu{display:none;flex-direction:column;gap:8px;align-items:flex-end}
+.fmini:active{opacity:.7}
+.fmini-i{font-size:16px;width:20px;text-align:center}
+#fab-menu{display:none;flex-direction:column;align-items:flex-end;gap:8px}
 #fab-menu.open{display:flex}
+.fab-backdrop{
+  position:fixed;inset:0;z-index:480;display:none;
+}
+.fab-backdrop.show{display:block}
 
-/* ── PAGE HEADER ── */
-.page-header{padding:52px 20px 0}
-.page-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.5px}
-.page-subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+/* ════════════════════════════════
+   PAGE HEADERS
+════════════════════════════════ */
+.ph{padding:calc(var(--st) + 10px) 20px 0}
+.ph-title{font-family:'Syne',sans-serif;font-size:28px;font-weight:700;letter-spacing:-.5px}
+.ph-sub{font-size:13px;color:var(--muted);margin-top:3px}
+.ph-row{display:flex;justify-content:space-between;align-items:center}
 
-/* ── CARDS ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin:12px 16px 0}
-.card-sm{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 14px}
+/* ════════════════════════════════
+   CARDS / SURFACES
+════════════════════════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px;margin:12px 16px 0}
+.card-flush{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);margin:12px 16px 0;overflow:hidden}
 
-/* ── HERO BALANCE ── */
+/* ════════════════════════════════
+   HERO BALANCE
+════════════════════════════════ */
 .hero{
-  margin:16px;
+  margin:12px 16px 0;
   background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:20px;
-  position:relative;overflow:hidden;
+  border-radius:var(--r);padding:20px;
 }
-.hero::before{
-  content:'';position:absolute;top:-30px;right:-30px;
-  width:160px;height:160px;border-radius:50%;
-  background:radial-gradient(circle,rgba(200,240,96,.08) 0%,transparent 70%);
-  pointer-events:none;
+.hero-lbl{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
+.hero-amt{font-family:'Syne',sans-serif;font-size:44px;font-weight:700;letter-spacing:-2px;line-height:1;margin-top:4px}
+.hero-amt.pos{color:var(--accent)}
+.hero-amt.neg{color:var(--red)}
+.hero-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.hs{background:var(--surface2);border-radius:var(--rsm);padding:12px}
+.hs-lbl{font-size:11px;color:var(--muted);margin-bottom:3px}
+.hs-val{font-size:16px;font-weight:500}
+.hs-val.g{color:var(--green)} .hs-val.r{color:var(--red)}
+
+/* ════════════════════════════════
+   SECTION HEADS
+════════════════════════════════ */
+.sh{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px}
+.sh-t{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
+.sh-a{font-size:13px;color:var(--accent);cursor:pointer}
+
+/* ════════════════════════════════
+   TRANSACTION ROWS
+════════════════════════════════ */
+.txr{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+  cursor:pointer;transition:background .1s;
 }
-.hero-label{font-size:11px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;font-weight:500}
-.hero-amount{font-family:'Syne',sans-serif;font-size:44px;font-weight:700;letter-spacing:-2px;margin-top:4px;line-height:1}
-.hero-amount.pos{color:var(--accent)}
-.hero-amount.neg{color:var(--red)}
-.hero-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
-.hero-stat{background:var(--surface2);border-radius:var(--radius-sm);padding:12px}
-.hero-stat-label{font-size:11px;color:var(--muted);margin-bottom:4px}
-.hero-stat-val{font-size:17px;font-weight:500}
-.hero-stat-val.green{color:var(--green)}
-.hero-stat-val.red{color:var(--red)}
-
-/* ── SECTION ── */
-.section-head{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px}
-.section-title{font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.1em;text-transform:uppercase}
-.section-action{font-size:13px;color:var(--accent);cursor:pointer}
-
-/* ── TX LIST ── */
-.tx-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
-.tx-item:last-child{border-bottom:none;padding-bottom:0}
-.tx-item:first-child{padding-top:0}
-.tx-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
-.tx-icon.in{background:var(--green-bg);color:var(--green)}
-.tx-icon.out{background:var(--red-bg);color:var(--red)}
-.tx-icon.invoice{background:var(--amber-bg);color:var(--amber)}
-.tx-icon.receipt{background:var(--blue-bg);color:var(--blue)}
-.tx-info{flex:1;min-width:0}
-.tx-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tx-sub{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
-.tx-amount{font-size:15px;font-weight:500;white-space:nowrap;text-align:right}
-.tx-amount.in{color:var(--green)}
-.tx-amount.out{color:var(--red)}
-.tx-amount.invoice{color:var(--amber)}
-.tx-amount.receipt{color:var(--blue)}
-
-/* ── CHIPS ── */
-.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
-.chip.green{background:var(--green-bg);color:var(--green)}
-.chip.red{background:var(--red-bg);color:var(--red)}
-.chip.amber{background:var(--amber-bg);color:var(--amber)}
-.chip.blue{background:var(--blue-bg);color:var(--blue)}
-.chip.muted{background:var(--surface3);color:var(--muted2)}
-
-/* ── PROJECT CARD ── */
-.proj-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius);padding:16px;
-  margin:8px 16px 0;cursor:pointer;
-  transition:transform .15s,border-color .15s;
-  position:relative;overflow:hidden;
-}
-.proj-card:active{transform:scale(0.98)}
-.proj-card.active-proj{border-color:rgba(200,240,96,0.3)}
-.proj-card-accent{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:2px 0 0 2px}
-.proj-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:600;margin-bottom:4px}
-.proj-meta{font-size:12px;color:var(--muted);margin-bottom:12px}
-.proj-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-.proj-stat{background:var(--surface2);border-radius:var(--radius-xs);padding:8px 10px}
-.proj-stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-.proj-stat-val{font-size:14px;font-weight:500;margin-top:2px}
-.proj-actions{display:flex;gap:8px;margin-top:12px}
-.proj-btn{flex:1;height:36px;border:1px solid var(--border2);border-radius:var(--radius-xs);background:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;cursor:pointer;transition:background .15s}
-.proj-btn:active{background:var(--surface3)}
-.proj-btn.accent{background:var(--accent-dim);border-color:rgba(200,240,96,0.3);color:var(--accent)}
-
-/* ── INVOICE / RECEIPT CARDS ── */
-.doc-card{
-  background:var(--surface);border:1px solid var(--border);
-  border-radius:var(--radius-sm);padding:14px;
-  margin:8px 16px 0;display:flex;align-items:center;gap:12px;
-}
-.doc-thumb{
-  width:48px;height:60px;border-radius:8px;
-  background:var(--surface3);border:1px solid var(--border);
+.txr:last-child{border-bottom:none}
+.txr:active{background:var(--surface2)}
+.tx-ico{
+  width:38px;height:38px;border-radius:11px;
   display:flex;align-items:center;justify-content:center;
-  font-size:22px;flex-shrink:0;overflow:hidden;
+  font-size:15px;flex-shrink:0;font-weight:600;
 }
-.doc-thumb img{width:100%;height:100%;object-fit:cover;border-radius:8px}
-.doc-info{flex:1;min-width:0}
-.doc-name{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.doc-sub{font-size:12px;color:var(--muted);margin-top:2px}
-.doc-amount{font-size:16px;font-weight:600;color:var(--amber);margin-top:4px}
-.doc-status{margin-top:6px}
+.tx-ico.in{background:var(--green-bg);color:var(--green)}
+.tx-ico.out{background:var(--red-bg);color:var(--red)}
+.tx-inf{flex:1;min-width:0}
+.tx-n{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tx-s{font-size:12px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px}
+.tx-amt{font-size:15px;font-weight:500;white-space:nowrap;text-align:right}
+.tx-amt.in{color:var(--green)} .tx-amt.out{color:var(--red)}
+.paper-clip{font-size:11px;background:var(--surface3);border-radius:4px;padding:1px 5px;color:var(--muted2)}
 
-/* ── STATUS BADGE ── */
-.status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
-.status-dot.paid{background:var(--green)}
-.status-dot.pending{background:var(--amber)}
-.status-dot.overdue{background:var(--red)}
+/* ════════════════════════════════
+   CHIPS
+════════════════════════════════ */
+.chip{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap}
+.chip.g{background:var(--green-bg);color:var(--green)}
+.chip.r{background:var(--red-bg);color:var(--red)}
+.chip.a{background:var(--amber-bg);color:var(--amber)}
+.chip.b{background:var(--blue-bg);color:var(--blue)}
+.chip.m{background:var(--surface3);color:var(--muted2)}
 
-/* ── EMPTY ── */
-.empty{text-align:center;padding:48px 24px;color:var(--muted)}
-.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
-.empty-text{font-size:14px;line-height:1.6}
+/* ════════════════════════════════
+   PROJECT CARDS
+════════════════════════════════ */
+.pc{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin:8px 16px 0;
+  cursor:pointer;transition:border-color .15s;
+  position:relative;overflow:hidden;
+}
+.pc:active{border-color:var(--border2)}
+.pc-stripe{position:absolute;left:0;top:0;bottom:0;width:3px}
+.pc-name{font-family:'Syne',sans-serif;font-size:17px;font-weight:600;margin-bottom:2px}
+.pc-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.pcs{background:var(--surface2);border-radius:var(--rxs);padding:8px 10px}
+.pcs-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.pcs-val{font-size:13px;font-weight:500;margin-top:2px}
+.pc-btns{display:flex;gap:8px;margin-top:12px}
+.pcb{
+  flex:1;height:34px;border:1px solid var(--border2);border-radius:var(--rxs);
+  background:none;color:var(--text);font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:500;cursor:pointer;
+}
+.pcb:active{background:var(--surface3)}
+.pcb.accent{background:var(--accent-dim);border-color:rgba(200,240,96,.25);color:var(--accent)}
 
-/* ── OVERLAYS ── */
-.overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.7);
-  z-index:300;display:none;align-items:flex-end;
+/* ════════════════════════════════
+   OVERLAYS / SHEETS
+════════════════════════════════ */
+.ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.65);
+  z-index:600;display:none;align-items:flex-end;
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
-.overlay.show{display:flex}
-.sheet{
-  background:var(--surface);
-  border-radius:24px 24px 0 0;
+.ov.show{display:flex}
+.sh-sheet{
+  background:var(--surface);border-radius:22px 22px 0 0;
   width:100%;max-height:92vh;overflow-y:auto;
-  padding:0 0 calc(var(--safe-bottom) + 20px);
-  animation:sheetUp .28s cubic-bezier(0.4,0,0.2,1);
+  padding:0 0 calc(var(--sb) + 20px);
+  animation:sup .28s cubic-bezier(.25,.46,.45,.94);
 }
-@keyframes sheetUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
-.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:12px auto 0}
-.sheet-content{padding:16px 20px 0}
-.sheet-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:20px}
+@keyframes sup{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sh-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:12px auto 0}
+.sh-body{padding:16px 20px 0}
+.sh-title{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:18px}
 
-/* ── FORM ── */
-.field{margin-bottom:14px}
-.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+/* ════════════════════════════════
+   SLIDE-IN PANELS (back navigation)
+════════════════════════════════ */
+.panel{
+  position:fixed;inset:0;background:var(--bg);
+  z-index:550;transform:translateX(100%);
+  transition:transform .32s cubic-bezier(.25,.46,.45,.94);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.panel.open{transform:translateX(0)}
+.panel-head{
+  position:sticky;top:0;background:var(--bg);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  padding:calc(var(--st) + 10px) 20px 14px;
+  z-index:10;
+}
+.back-btn{
+  width:36px;height:36px;border-radius:18px;
+  background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.back-btn:active{opacity:.6}
+.panel-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:700}
+.panel-content{padding:16px 20px calc(var(--sb) + 40px)}
+
+/* ════════════════════════════════
+   FORMS
+════════════════════════════════ */
+.f{margin-bottom:14px}
+.f label{display:block;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 input[type=text],input[type=number],input[type=date],select,textarea{
   width:100%;height:48px;background:var(--surface2);
-  border:1px solid var(--border2);border-radius:var(--radius-sm);
+  border:1px solid var(--border2);border-radius:var(--rsm);
   padding:0 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;
   outline:none;appearance:none;-webkit-appearance:none;
   transition:border-color .15s;
@@ -242,916 +282,1052 @@ input[type=text],input[type=number],input[type=date],select,textarea{
 select option{background:var(--surface2)}
 textarea{height:72px;padding:12px 14px;resize:none}
 input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+
 .seg{display:grid;gap:6px;margin-bottom:14px}
-.seg-2{grid-template-columns:1fr 1fr}
-.seg-3{grid-template-columns:1fr 1fr 1fr}
-.seg-btn{
-  height:44px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+.s2{grid-template-columns:1fr 1fr}
+.s3{grid-template-columns:1fr 1fr 1fr}
+.sb-{
+  height:44px;border:1px solid var(--border2);border-radius:var(--rsm);
   background:none;color:var(--muted2);font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:500;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;
+  font-size:13px;font-weight:500;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:6px;
   transition:all .15s;
 }
-.seg-btn.active-in{background:var(--green-bg);color:var(--green);border-color:rgba(46,204,143,.3)}
-.seg-btn.active-out{background:var(--red-bg);color:var(--red);border-color:rgba(255,92,92,.3)}
-.seg-btn.active-inv{background:var(--amber-bg);color:var(--amber);border-color:rgba(245,166,35,.3)}
-.seg-btn.active-rec{background:var(--blue-bg);color:var(--blue);border-color:rgba(74,158,255,.3)}
-.seg-btn.active-proj{background:var(--accent-dim);color:var(--accent);border-color:rgba(200,240,96,.3)}
+.sb-.ai{background:var(--green-bg);color:var(--green);border-color:rgba(46,204,143,.3)}
+.sb-.ao{background:var(--red-bg);color:var(--red);border-color:rgba(255,92,92,.3)}
+.sb-.ap{background:var(--accent-dim);color:var(--accent);border-color:rgba(200,240,96,.3)}
 
-/* Photo upload zone */
-.upload-zone{
-  border:2px dashed var(--border2);border-radius:var(--radius-sm);
-  padding:20px;text-align:center;cursor:pointer;
-  transition:border-color .15s;margin-bottom:14px;
-  position:relative;
-}
-.upload-zone:active{border-color:var(--accent)}
-.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.upload-icon{font-size:28px;margin-bottom:8px}
-.upload-text{font-size:13px;color:var(--muted);line-height:1.5}
-.upload-preview{
-  width:100%;height:140px;border-radius:var(--radius-xs);
-  object-fit:cover;margin-top:10px;display:none;
-}
-.upload-options{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
-.upload-opt{
-  height:72px;border:1px solid var(--border2);border-radius:var(--radius-sm);
+/* Upload */
+.upopts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.upopt{
+  height:68px;border:1px solid var(--border2);border-radius:var(--rsm);
   background:var(--surface2);display:flex;flex-direction:column;
-  align-items:center;justify-content:center;gap:6px;
-  cursor:pointer;font-size:12px;color:var(--muted2);transition:all .15s;
-  position:relative;overflow:hidden;
+  align-items:center;justify-content:center;gap:5px;
+  cursor:pointer;font-size:12px;color:var(--muted2);
+  position:relative;overflow:hidden;transition:border-color .15s;
 }
-.upload-opt input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
-.upload-opt:active{background:var(--surface3);border-color:var(--accent)}
-.upload-opt-icon{font-size:24px}
+.upopt:active{border-color:var(--accent)}
+.upopt input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upopt-i{font-size:22px}
+.up-prev{
+  width:100%;height:130px;border-radius:var(--rsm);
+  object-fit:cover;display:none;margin-top:6px;
+}
+.up-pdf{
+  display:none;background:var(--amber-bg);color:var(--amber);
+  border-radius:var(--rxs);padding:8px 12px;font-size:13px;margin-top:8px;
+}
+.up-none{font-size:12px;color:var(--muted);margin-top:6px;text-align:center}
 
-.submit-btn{
-  width:100%;height:52px;border-radius:var(--radius-sm);
-  border:none;background:var(--accent);color:#0F0F0E;
-  font-family:'Syne',sans-serif;font-size:15px;font-weight:700;
-  cursor:pointer;margin-top:6px;transition:opacity .15s;
+.submit{
+  width:100%;height:50px;border-radius:var(--rsm);border:none;
+  background:var(--accent);color:#0F0F0E;font-family:'Syne',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;
+  transition:opacity .15s;
 }
-.submit-btn:active{opacity:.85}
-.delete-btn{
+.submit:active{opacity:.82}
+.del-btn{
   background:var(--red-bg);color:var(--red);border:none;
-  padding:8px 14px;border-radius:var(--radius-xs);
+  padding:7px 12px;border-radius:var(--rxs);
   font-size:12px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;
 }
+.del-btn:active{opacity:.7}
 
-/* ── BILAN SHEET ── */
-.bilan-hero{background:var(--surface2);border-radius:var(--radius-sm);padding:16px;margin-bottom:16px;text-align:center}
-.bilan-name{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:4px}
-.bilan-balance{font-family:'Syne',sans-serif;font-size:36px;font-weight:700;margin-top:8px}
-.bilan-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border)}
+/* ════════════════════════════════
+   TX DETAIL PANEL
+════════════════════════════════ */
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border:none}
+.dr-lbl{font-size:14px;color:var(--muted2)}
+.dr-val{font-size:14px;font-weight:500;text-align:right;max-width:60%}
+
+/* ════════════════════════════════
+   BILAN PANEL — professional
+════════════════════════════════ */
+.bilan-cover{
+  background:var(--surface2);border-radius:var(--r);
+  padding:24px;margin-bottom:20px;
+  border-left:4px solid var(--accent);
+}
+.bilan-proj{font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:2px}
+.bilan-date{font-size:12px;color:var(--muted);margin-bottom:16px}
+.bilan-net-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+.bilan-net{font-family:'Syne',sans-serif;font-size:38px;font-weight:700;letter-spacing:-1px}
+.bilan-net.pos{color:var(--accent)} .bilan-net.neg{color:var(--red)}
+
+.bilan-section{margin-bottom:20px}
+.bilan-sec-title{
+  font-size:10px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.12em;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+  margin-bottom:0;
+}
+.bilan-row{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  padding:11px 0;border-bottom:1px solid var(--border);
+}
 .bilan-row:last-child{border:none}
-.bilan-label{font-size:14px;color:var(--muted2)}
-.bilan-val{font-size:14px;font-weight:500}
-
-/* ── PROGRESS BAR ── */
-.progress-bar{height:6px;background:var(--surface3);border-radius:3px;margin-top:12px;overflow:hidden}
-.progress-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s}
-.progress-fill.neg{background:var(--red)}
-
-/* ── SWIPE INDICATOR ── */
-.swipe-hint{
-  position:fixed;bottom:calc(var(--nav-h) + var(--safe-bottom) + 80px);
-  left:50%;transform:translateX(-50%);
-  background:rgba(200,240,96,.15);border:1px solid rgba(200,240,96,.2);
-  color:var(--accent);font-size:11px;font-weight:600;letter-spacing:.08em;
-  padding:6px 14px;border-radius:20px;pointer-events:none;
-  opacity:0;animation:hintFade 2.5s ease 1s forwards;
+.br-left{flex:1}
+.br-lbl{font-size:13px;color:var(--muted2)}
+.br-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.br-val{font-size:13px;font-weight:500;text-align:right;white-space:nowrap}
+.bilan-total-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:14px;background:var(--surface2);border-radius:var(--rsm);margin-top:2px;
 }
-@keyframes hintFade{0%{opacity:0}20%{opacity:1}80%{opacity:1}100%{opacity:0}}
+.bilan-total-lbl{font-size:13px;font-weight:600}
+.bilan-total-val{font-size:16px;font-weight:700}
 
-/* ── PROJ SECTION HEADER ── */
-.proj-section-head{
-  font-size:11px;font-weight:600;color:var(--muted);
-  letter-spacing:.1em;text-transform:uppercase;
-  padding:16px 20px 6px;
+.prog-wrap{margin:16px 0}
+.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px}
+.prog{height:6px;background:var(--surface3);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;background:var(--green);transition:width .5s}
+.prog-fill.warn{background:var(--amber)} .prog-fill.danger{background:var(--red)}
+
+.bilan-tx-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 0;border-bottom:1px solid var(--border);
 }
-.divider{height:1px;background:var(--border);margin:8px 16px}
+.bilan-tx-row:last-child{border:none}
+.btx-lbl{font-size:13px;max-width:65%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btx-sub{font-size:11px;color:var(--muted);margin-top:1px}
+.btx-amt{font-size:13px;font-weight:500}
 
-/* ── PHOTO VIEW ── */
-.photo-overlay{
-  position:fixed;inset:0;background:rgba(0,0,0,0.95);
-  z-index:400;display:none;flex-direction:column;
+/* Photo viewer */
+.photo-ov{
+  position:fixed;inset:0;background:rgba(0,0,0,.96);
+  z-index:900;display:none;flex-direction:column;
   align-items:center;justify-content:center;
 }
-.photo-overlay.show{display:flex}
-.photo-overlay img{max-width:100%;max-height:80vh;object-fit:contain;border-radius:12px}
-.photo-close{position:absolute;top:52px;right:20px;width:36px;height:36px;border-radius:18px;background:rgba(255,255,255,.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.photo-ov.show{display:flex}
+.photo-ov img{max-width:100%;max-height:82vh;object-fit:contain;border-radius:10px}
+.photo-close{
+  position:absolute;top:calc(var(--st) + 8px);right:16px;
+  width:36px;height:36px;border-radius:18px;
+  background:rgba(255,255,255,.15);border:none;color:#fff;
+  font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
 
+/* Misc */
+.empty{text-align:center;padding:44px 20px;color:var(--muted)}
+.empty-i{font-size:36px;margin-bottom:10px;opacity:.4}
+.empty-t{font-size:14px;line-height:1.6}
+.sect-div{height:1px;background:var(--border);margin:4px 16px}
+.proj-sec-hd{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;padding:14px 20px 4px}
+
+/* Update banner */
+#update-bar{
+  position:fixed;top:0;left:0;right:0;
+  background:var(--accent);color:#0F0F0E;
+  text-align:center;font-size:13px;font-weight:600;
+  padding:12px 20px;z-index:1000;cursor:pointer;
+  display:none;
+}
 </style>
 </head>
 <body>
 
-<!-- PAGES -->
-<div id="pages-wrapper">
+<div id="update-bar" onclick="location.reload(true)">
+  Nouvelle version disponible — Appuyer pour mettre a jour
+</div>
 
-  <!-- PAGE 0: DASHBOARD -->
-  <div class="page" id="page-0">
-    <div class="page-header">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+<!-- ════ PAGES DECK ════ -->
+<div id="deck">
+
+  <!-- PAGE 0 · DASHBOARD -->
+  <div class="page" id="p0">
+    <div class="ph">
+      <div class="ph-row">
         <div>
-          <div class="page-title">Tableau de bord</div>
-          <div class="page-subtitle" id="dash-date"></div>
+          <div class="ph-title">Tableau de bord</div>
+          <div class="ph-sub" id="d-date"></div>
         </div>
-        <div id="proj-filter-pill" onclick="openProjSelector()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;white-space:nowrap;max-width:130px">
+        <div onclick="openProjSel()" style="background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:7px 14px;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px;max-width:130px">
           <span id="pf-dot" style="width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0"></span>
-          <span id="pf-name" style="overflow:hidden;text-overflow:ellipsis">Tous</span>
-          <span style="color:var(--muted);font-size:10px">▾</span>
+          <span id="pf-nm" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Tous</span>
+          <span style="color:var(--muted);font-size:10px;flex-shrink:0">&#9662;</span>
         </div>
       </div>
     </div>
 
     <div class="hero">
-      <div class="hero-label">Solde net</div>
-      <div class="hero-amount" id="d-balance">0,00 €</div>
-      <div class="hero-row">
-        <div class="hero-stat">
-          <div class="hero-stat-label">Entrées</div>
-          <div class="hero-stat-val green" id="d-in">0 €</div>
-        </div>
-        <div class="hero-stat">
-          <div class="hero-stat-label">Sorties + Fact.</div>
-          <div class="hero-stat-val red" id="d-out">0 €</div>
-        </div>
+      <div class="hero-lbl">Solde net</div>
+      <div class="hero-amt" id="d-bal">0,00 €</div>
+      <div class="hero-grid">
+        <div class="hs"><div class="hs-lbl">Entrees</div><div class="hs-val g" id="d-in">0 €</div></div>
+        <div class="hs"><div class="hs-lbl">Sorties</div><div class="hs-val r" id="d-out">0 €</div></div>
       </div>
     </div>
 
-    <div class="section-head">
-      <div class="section-title">Dernières opérations</div>
-      <div class="section-action" onclick="goToPage(2)">Voir tout →</div>
-    </div>
-    <div class="card" style="padding:0 16px">
-      <div id="recent-list"><div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div></div>
-    </div>
-
-    <div class="section-head">
-      <div class="section-title">Factures récentes</div>
-      <div class="section-action" onclick="goToPage(3)">Voir tout →</div>
-    </div>
-    <div id="recent-invs"></div>
+    <div class="sh"><div class="sh-t">Dernieres operations</div><div class="sh-a" onclick="goTo(2)">Voir tout</div></div>
+    <div class="card-flush" id="d-recent"><div class="empty"><div class="empty-i">&#128184;</div><div class="empty-t">Aucune transaction</div></div></div>
   </div>
 
-  <!-- PAGE 1: PROJETS -->
-  <div class="page" id="page-1">
-    <div class="page-header">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <div class="page-title">Projets</div>
-          <div class="page-subtitle" id="proj-subtitle">0 actifs · 0 terminés</div>
-        </div>
-        <button onclick="openAddProject()" style="width:40px;height:40px;border-radius:20px;background:var(--accent-dim);border:1px solid rgba(200,240,96,.3);color:var(--accent);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
+  <!-- PAGE 1 · PROJETS -->
+  <div class="page" id="p1">
+    <div class="ph">
+      <div class="ph-row">
+        <div><div class="ph-title">Projets</div><div class="ph-sub" id="proj-sub">—</div></div>
+        <button onclick="openAddProj()" style="width:38px;height:38px;border-radius:19px;background:var(--accent-dim);border:1px solid rgba(200,240,96,.3);color:var(--accent);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center">+</button>
       </div>
     </div>
-    <div class="proj-section-head" id="active-head">EN COURS</div>
-    <div id="active-projs"></div>
-    <div class="divider"></div>
-    <div class="proj-section-head" id="done-head">TERMINÉS</div>
-    <div id="done-projs"></div>
+    <div class="proj-sec-hd">En cours</div>
+    <div id="projs-active"></div>
+    <div class="sect-div"></div>
+    <div class="proj-sec-hd">Termines</div>
+    <div id="projs-done"></div>
   </div>
 
-  <!-- PAGE 2: TRANSACTIONS -->
-  <div class="page" id="page-2">
-    <div class="page-header">
-      <div class="page-title">Transactions</div>
-      <div class="page-subtitle">Entrées & sorties</div>
-    </div>
-    <div class="card" style="padding:0 16px;margin-top:16px">
-      <div id="all-tx-list"><div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div></div>
-    </div>
+  <!-- PAGE 2 · FLUX -->
+  <div class="page" id="p2">
+    <div class="ph"><div class="ph-title">Flux</div><div class="ph-sub">Entrees et sorties</div></div>
+    <div class="card-flush" style="margin-top:16px" id="all-tx"><div class="empty"><div class="empty-i">&#128184;</div><div class="empty-t">Aucune transaction</div></div></div>
   </div>
 
-  <!-- PAGE 3: FACTURES & JUSTIFICATIFS -->
-  <div class="page" id="page-3">
-    <div class="page-header">
-      <div class="page-title">Documents</div>
-      <div class="page-subtitle">Factures & justificatifs</div>
+  <!-- PAGE 3 · DOCUMENTS -->
+  <div class="page" id="p3">
+    <div class="ph"><div class="ph-title">Documents</div><div class="ph-sub">Pieces jointes classees par projet</div></div>
+    <div style="padding:10px 16px 0;display:flex;gap:8px">
+      <button id="dt-fac" class="sb- ai" style="flex:1;height:36px;font-size:12px" onclick="switchDocTab('fac')">Factures</button>
+      <button id="dt-rec" class="sb-" style="flex:1;height:36px;font-size:12px" onclick="switchDocTab('rec')">Justificatifs</button>
     </div>
-
-    <!-- SUB TABS -->
-    <div style="display:flex;gap:8px;padding:12px 16px 0">
-      <button class="seg-btn active-inv" id="doctab-inv" onclick="switchDocTab('inv')" style="flex:1;height:38px">🧾 Factures</button>
-      <button class="seg-btn" id="doctab-rec" onclick="switchDocTab('rec')" style="flex:1;height:38px">📎 Justificatifs</button>
-    </div>
-
-    <div id="doc-inv-content">
-      <div id="inv-list-main"></div>
-    </div>
-    <div id="doc-rec-content" style="display:none">
-      <div id="rec-list-main"></div>
-    </div>
+    <div id="docs-fac"></div>
+    <div id="docs-rec" style="display:none"></div>
   </div>
 
-  <!-- PAGE 4: SETTINGS / EXPORT -->
-  <div class="page" id="page-4">
-    <div class="page-header">
-      <div class="page-title">Réglages</div>
-      <div class="page-subtitle">Données & export</div>
+  <!-- PAGE 4 · REGLAGES -->
+  <div class="page" id="p4">
+    <div class="ph"><div class="ph-title">Reglages</div></div>
+    <div class="sh"><div class="sh-t">Donnees</div></div>
+    <div class="card-flush">
+      <div class="txr" onclick="exportJSON()"><div class="tx-ico" style="background:var(--surface3);font-size:18px">&#128228;</div><div class="tx-inf"><div class="tx-n">Exporter les donnees</div><div class="tx-s">Telecharger en JSON</div></div><span style="color:var(--muted);font-size:20px">&#8250;</span></div>
+      <div class="txr" onclick="document.getElementById('imp-f').click()"><div class="tx-ico" style="background:var(--surface3);font-size:18px">&#128229;</div><div class="tx-inf"><div class="tx-n">Importer des donnees</div><div class="tx-s">Restaurer depuis JSON</div></div><span style="color:var(--muted);font-size:20px">&#8250;</span></div>
+      <input type="file" id="imp-f" accept=".json" style="display:none" onchange="importJSON(this)">
     </div>
-
-    <div class="section-head"><div class="section-title">Données</div></div>
-    <div class="card" style="padding:0 4px">
-      <div onclick="exportData()" style="display:flex;align-items:center;gap:12px;padding:16px 12px;cursor:pointer;border-bottom:1px solid var(--border)">
-        <span style="font-size:22px">📤</span>
-        <div>
-          <div style="font-size:14px;font-weight:500">Exporter toutes les données</div>
-          <div style="font-size:12px;color:var(--muted)">Télécharger en JSON</div>
-        </div>
-        <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
-      </div>
-      <div onclick="document.getElementById('import-file').click()" style="display:flex;align-items:center;gap:12px;padding:16px 12px;cursor:pointer">
-        <span style="font-size:22px">📥</span>
-        <div>
-          <div style="font-size:14px;font-weight:500">Importer des données</div>
-          <div style="font-size:12px;color:var(--muted)">Restaurer depuis JSON</div>
-        </div>
-        <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
-      </div>
-      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(this)">
-    </div>
-
-    <div class="section-head"><div class="section-title">À propos</div></div>
+    <div class="sh"><div class="sh-t">Application</div></div>
+    <div class="card" id="app-info" style="font-size:13px;color:var(--muted);line-height:1.8"></div>
+    <div class="sh"><div class="sh-t">Zone de danger</div></div>
     <div class="card">
-      <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;margin-bottom:4px">FinFlow</div>
-      <div style="font-size:13px;color:var(--muted);line-height:1.6">Gestion financière par projet. Vos données sont stockées localement sur votre appareil. Aucune connexion requise.</div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" id="app-stats"></div>
-    </div>
-    <div class="card" style="margin-top:8px">
-      <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Zone de danger</div>
-      <button onclick="clearAll()" style="background:var(--red-bg);color:var(--red);border:1px solid rgba(255,92,92,.2);border-radius:var(--radius-xs);padding:10px 16px;font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;width:100%">🗑 Effacer toutes les données</button>
+      <button onclick="clearAll()" style="width:100%;height:44px;background:var(--red-bg);color:var(--red);border:1px solid rgba(255,92,92,.2);border-radius:var(--rsm);font-size:13px;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer">Effacer toutes les donnees</button>
     </div>
   </div>
+
 </div>
 
-<!-- BOTTOM NAV -->
-<div id="bottom-nav">
-  <div class="nav-item active" onclick="goToPage(0)">
-    <div class="nav-icon">🏠</div>
-    <div class="nav-label">Dashboard</div>
-  </div>
-  <div class="nav-item" onclick="goToPage(1)">
-    <div class="nav-icon">📁</div>
-    <div class="nav-label">Projets</div>
-  </div>
-  <div class="nav-item" onclick="goToPage(2)">
-    <div class="nav-icon">↕️</div>
-    <div class="nav-label">Flux</div>
-  </div>
-  <div class="nav-item" onclick="goToPage(3)">
-    <div class="nav-icon">🧾</div>
-    <div class="nav-label">Documents</div>
-  </div>
-  <div class="nav-item" onclick="goToPage(4)">
-    <div class="nav-icon">⚙️</div>
-    <div class="nav-label">Réglages</div>
-  </div>
+<!-- ════ BOTTOM NAV ════ -->
+<div id="nav">
+  <div class="ni active" onclick="goTo(0)"><div class="ni-ico">&#127968;</div><div class="ni-lbl">Dashboard</div></div>
+  <div class="ni" onclick="goTo(1)"><div class="ni-ico">&#128193;</div><div class="ni-lbl">Projets</div></div>
+  <div class="ni" onclick="goTo(2)"><div class="ni-ico">&#8597;&#65039;</div><div class="ni-lbl">Flux</div></div>
+  <div class="ni" onclick="goTo(3)"><div class="ni-ico">&#128203;</div><div class="ni-lbl">Documents</div></div>
+  <div class="ni" onclick="goTo(4)"><div class="ni-ico">&#9881;&#65039;</div><div class="ni-lbl">Reglages</div></div>
 </div>
 
-<!-- FAB -->
-<div class="fab-wrap">
+<!-- ════ FAB ════ -->
+<div id="fab-wrap">
   <div id="fab-menu">
-    <div class="fab-mini" onclick="openModal('in')"><span class="fab-mini-icon">↑</span>Entrée d'argent</div>
-    <div class="fab-mini" onclick="openModal('out')"><span class="fab-mini-icon">↓</span>Sortie d'argent</div>
-    <div class="fab-mini" onclick="openModal('invoice')"><span class="fab-mini-icon">🧾</span>Facture</div>
-    <div class="fab-mini" onclick="openModal('receipt')"><span class="fab-mini-icon">📎</span>Justificatif</div>
+    <div class="fmini" onclick="openTxModal('in')"><span class="fmini-i">&#8593;</span>Entree d'argent</div>
+    <div class="fmini" onclick="openTxModal('out')"><span class="fmini-i">&#8595;</span>Sortie d'argent</div>
   </div>
-  <button class="fab-main" id="fab-btn" onclick="toggleFab()">+</button>
+  <button id="fab" onclick="toggleFab()">+</button>
 </div>
+<div class="fab-backdrop" id="fab-bd" onclick="toggleFab()"></div>
 
-<div class="swipe-hint">← Swipez pour naviguer →</div>
+<!-- ════════════════════════════════
+     OVERLAYS
+════════════════════════════════ -->
 
-<!-- ══ MODAL: ADD TRANSACTION ══ -->
-<div class="overlay" id="overlay-tx" onclick="closeBg(event,'overlay-tx')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-content">
-      <div class="sheet-title" id="modal-title">Nouveau</div>
+<!-- ADD TRANSACTION -->
+<div class="ov" id="ov-tx" onclick="closeBg(event,'ov-tx')">
+  <div class="sh-sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-body">
+      <div class="sh-title" id="tx-modal-title">Nouvelle entree</div>
 
-      <div class="field" id="type-field">
+      <div class="f" id="tx-type-row">
         <label>Type</label>
-        <div class="seg seg-2">
-          <button class="seg-btn" id="seg-in" onclick="setType('in')">↑ Entrée</button>
-          <button class="seg-btn" id="seg-out" onclick="setType('out')">↓ Sortie</button>
+        <div class="seg s2">
+          <button class="sb- ai" id="sb-in" onclick="setTxType('in')">Entree</button>
+          <button class="sb-" id="sb-out" onclick="setTxType('out')">Sortie</button>
         </div>
       </div>
 
-      <div class="field">
-        <label>Description</label>
-        <input type="text" id="f-desc" placeholder="Ex: Paiement client ACME…">
-      </div>
-      <div class="field">
-        <label>Montant (€)</label>
-        <input type="number" id="f-amount" placeholder="0.00" step="0.01" min="0">
-      </div>
-      <div class="field">
-        <label>Projet</label>
-        <select id="f-project"><option value="">— Aucun projet —</option></select>
-      </div>
-      <div class="field">
-        <label>Date</label>
-        <input type="date" id="f-date">
+      <div class="f"><label>Description</label><input type="text" id="tx-desc" placeholder="Ex : paiement client, achat materiel…"></div>
+      <div class="f"><label>Montant (€)</label><input type="number" id="tx-amt" placeholder="0.00" step="0.01" min="0"></div>
+      <div class="f"><label>Projet</label><select id="tx-proj"><option value="">— Aucun projet —</option></select></div>
+      <div class="f"><label>Date</label><input type="date" id="tx-date"></div>
+      <div class="f"><label>Notes (optionnel)</label><textarea id="tx-notes" placeholder="Informations complementaires…"></textarea></div>
+
+      <div class="f">
+        <label>Piece jointe (facture ou justificatif)</label>
+        <div class="upopts">
+          <div class="upopt">
+            <input type="file" accept="image/*,application/pdf" onchange="handleUpload(event)" id="up-file">
+            <div class="upopt-i">&#128193;</div>
+            <span>Galerie / PDF</span>
+          </div>
+          <div class="upopt">
+            <input type="file" accept="image/*" capture="environment" onchange="handleUpload(event)" id="up-cam">
+            <div class="upopt-i">&#128247;</div>
+            <span>Appareil photo</span>
+          </div>
+        </div>
+        <div id="up-state">
+          <img id="up-prev" class="up-prev">
+          <div id="up-pdf" class="up-pdf">Document PDF joint</div>
+          <div id="up-none" class="up-none">Aucune piece jointe</div>
+        </div>
       </div>
 
-      <!-- INVOICE FIELDS -->
-      <div id="inv-extra" style="display:none">
-        <div class="field"><label>N° Facture</label><input type="text" id="f-invnum" placeholder="FAC-2024-001"></div>
-        <div class="field"><label>Client / Fournisseur</label><input type="text" id="f-client" placeholder="Nom de l'entreprise…"></div>
-        <div class="field"><label>Échéance</label><input type="date" id="f-due"></div>
-        <div class="field">
-          <label>Statut</label>
-          <select id="f-status">
+      <!-- Champs facture -->
+      <div id="inv-fields" style="display:none">
+        <div class="f"><label>Type de piece</label>
+          <select id="tx-doc-type">
+            <option value="invoice">Facture</option>
+            <option value="receipt">Justificatif / ticket</option>
+            <option value="quote">Devis</option>
+            <option value="other">Autre</option>
+          </select>
+        </div>
+        <div class="f"><label>Reference document</label><input type="text" id="tx-ref" placeholder="FAC-2024-001, REF…"></div>
+        <div class="f"><label>Emetteur / Fournisseur</label><input type="text" id="tx-vendor" placeholder="Nom de l'entreprise…"></div>
+        <div class="f"><label>Statut</label>
+          <select id="tx-inv-status">
+            <option value="paid">Payee</option>
             <option value="pending">En attente</option>
-            <option value="paid">Payée</option>
             <option value="overdue">En retard</option>
           </select>
         </div>
-        <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Conditions, remarques…"></textarea></div>
-        <div class="field">
-          <label>Joindre la facture (PDF ou photo)</label>
-          <div class="upload-options">
-            <div class="upload-opt">
-              <input type="file" accept="image/*,application/pdf" onchange="handleFile(event,'invoice')" id="inv-file-input">
-              <div class="upload-opt-icon">📷</div>
-              <span>Photo / PDF</span>
-            </div>
-            <div class="upload-opt">
-              <input type="file" accept="image/*" capture="environment" onchange="handleFile(event,'invoice')" id="inv-cam-input">
-              <div class="upload-opt-icon">📸</div>
-              <span>Appareil photo</span>
-            </div>
-          </div>
-          <div id="inv-preview-wrap" style="display:none;margin-bottom:14px">
-            <img id="inv-preview" class="upload-preview" style="display:block">
-            <div id="inv-pdf-badge" style="display:none;background:var(--amber-bg);color:var(--amber);border-radius:var(--radius-xs);padding:8px 12px;font-size:13px;margin-top:8px">📄 PDF joint</div>
-          </div>
-        </div>
       </div>
 
-      <!-- RECEIPT FIELDS -->
-      <div id="rec-extra" style="display:none">
-        <div class="field"><label>Libellé</label><input type="text" id="f-rec-label" placeholder="Ex: Ticket carburant, Matériaux…"></div>
-        <div class="field">
-          <label>Joindre le justificatif (photo ou PDF)</label>
-          <div class="upload-options">
-            <div class="upload-opt">
-              <input type="file" accept="image/*,application/pdf" onchange="handleFile(event,'receipt')" id="rec-file-input">
-              <div class="upload-opt-icon">📁</div>
-              <span>Galerie / PDF</span>
-            </div>
-            <div class="upload-opt">
-              <input type="file" accept="image/*" capture="environment" onchange="handleFile(event,'receipt')" id="rec-cam-input">
-              <div class="upload-opt-icon">📸</div>
-              <span>Appareil photo</span>
-            </div>
-          </div>
-          <div id="rec-preview-wrap" style="display:none;margin-bottom:14px">
-            <img id="rec-preview" class="upload-preview" style="display:block">
-            <div id="rec-pdf-badge" style="display:none;background:var(--blue-bg);color:var(--blue);border-radius:var(--radius-xs);padding:8px 12px;font-size:13px;margin-top:8px">📄 PDF joint</div>
-          </div>
-        </div>
-      </div>
-
-      <button class="submit-btn" onclick="submitTx()">Enregistrer</button>
+      <button class="submit" onclick="submitTx()">Enregistrer</button>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL: ADD PROJECT ══ -->
-<div class="overlay" id="overlay-proj" onclick="closeBg(event,'overlay-proj')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-content">
-      <div class="sheet-title">Nouveau projet</div>
-      <div class="field"><label>Nom du projet</label><input type="text" id="p-name" placeholder="Ex: Rénovation salon, Client ACME…"></div>
-      <div class="field">
+<!-- ADD PROJECT -->
+<div class="ov" id="ov-proj" onclick="closeBg(event,'ov-proj')">
+  <div class="sh-sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-body">
+      <div class="sh-title">Nouveau projet</div>
+      <div class="f"><label>Nom du projet</label><input type="text" id="p-nm" placeholder="Ex : Renovation salon, Client ACME…"></div>
+      <div class="f">
         <label>Couleur</label>
-        <div id="color-picker" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"></div>
+        <div id="c-pick" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"></div>
       </div>
-      <div class="field"><label>Description (optionnel)</label><textarea id="p-desc" placeholder="Quelques mots sur ce projet…"></textarea></div>
-      <div class="field">
-        <label>Statut</label>
-        <div class="seg seg-2">
-          <button class="seg-btn active-proj" id="ps-active" onclick="setProjStatus('active')">🟢 En cours</button>
-          <button class="seg-btn" id="ps-done" onclick="setProjStatus('done')">✅ Terminé</button>
+      <div class="f"><label>Description (optionnel)</label><textarea id="p-desc" placeholder="Quelques mots sur ce projet…"></textarea></div>
+      <div class="f">
+        <label>Statut initial</label>
+        <div class="seg s2">
+          <button class="sb- ap" id="ps-act" onclick="setPSt('active')">En cours</button>
+          <button class="sb-" id="ps-don" onclick="setPSt('done')">Termine</button>
         </div>
       </div>
-      <button class="submit-btn" onclick="submitProject()">Créer le projet</button>
+      <button class="submit" onclick="submitProj()">Creer le projet</button>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL: PROJECT SELECTOR ══ -->
-<div class="overlay" id="overlay-ps" onclick="closeBg(event,'overlay-ps')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-content">
-      <div class="sheet-title">Filtrer par projet</div>
+<!-- PROJECT SELECTOR -->
+<div class="ov" id="ov-ps" onclick="closeBg(event,'ov-ps')">
+  <div class="sh-sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-body">
+      <div class="sh-title">Filtrer par projet</div>
       <div id="ps-list"></div>
     </div>
   </div>
 </div>
 
-<!-- ══ MODAL: BILAN FINANCIER ══ -->
-<div class="overlay" id="overlay-bilan" onclick="closeBg(event,'overlay-bilan')">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-content">
-      <div class="sheet-title">Bilan financier</div>
-      <div id="bilan-content"></div>
-      <button class="submit-btn" style="margin-top:16px;background:var(--surface3);color:var(--text)" onclick="printBilan()">📄 Exporter en PDF</button>
-    </div>
+<!-- ════ SLIDE PANELS ════ -->
+
+<!-- TX DETAIL -->
+<div class="panel" id="pan-tx">
+  <div class="panel-head">
+    <button class="back-btn" onclick="closePanel('pan-tx')">&#8249;</button>
+    <div class="panel-title" id="pan-tx-title">Detail</div>
   </div>
+  <div class="panel-content" id="pan-tx-body"></div>
 </div>
 
-<!-- ══ PHOTO VIEWER ══ -->
-<div class="photo-overlay" id="photo-viewer" onclick="closePhoto()">
-  <button class="photo-close" onclick="closePhoto()">✕</button>
+<!-- BILAN -->
+<div class="panel" id="pan-bilan">
+  <div class="panel-head">
+    <button class="back-btn" onclick="closePanel('pan-bilan')">&#8249;</button>
+    <div class="panel-title">Bilan financier</div>
+    <button onclick="exportBilan()" style="margin-left:auto;background:var(--accent-dim);border:1px solid rgba(200,240,96,.3);color:var(--accent);border-radius:var(--rxs);padding:7px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Exporter PDF</button>
+  </div>
+  <div class="panel-content" id="pan-bilan-body"></div>
+</div>
+
+<!-- PHOTO VIEWER -->
+<div class="photo-ov" id="photo-ov" onclick="closePhoto()">
+  <button class="photo-close" onclick="closePhoto()">&#10005;</button>
   <img id="photo-img" src="" alt="">
 </div>
 
 <script>
-// ─── STATE ───────────────────────────────────────
-let S = JSON.parse(localStorage.getItem('finflow2')||'null') || {projects:[],transactions:[],filter:null};
-const save = () => localStorage.setItem('finflow2',JSON.stringify(S));
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+const KEY = 'finflow3';
+let S = JSON.parse(localStorage.getItem(KEY)||'null') || {projects:[],transactions:[],filter:null};
+const save = () => localStorage.setItem(KEY, JSON.stringify(S));
 
 const COLORS = ['#2ECC8F','#4A9EFF','#FF5C5C','#F5A623','#C8F060','#B06EFF','#FF7849','#00C4D4'];
-let selColor = COLORS[0], selType = 'in', selProjStatus = 'active';
-let pendingFile = {invoice:null, receipt:null};
-let currentBilanId = null;
+let selColor = COLORS[0];
+let selPSt = 'active';
+let selTxType = 'in';
+let pendingFile = null; // {data, type:'image'|'pdf', name}
 let fabOpen = false;
-let docTab = 'inv';
+let curDocTab = 'fac';
+let curBilanId = null;
 
-// ─── NAVIGATION ──────────────────────────────────
+const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+const fmt = n => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n||0);
+const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'}) : '—';
+const fmtDs = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '—';
+
+// ══════════════════════════════════════════════
+// NATIVE SWIPE ENGINE
+// ══════════════════════════════════════════════
+const deck = document.getElementById('deck');
 let curPage = 0;
-let touchX = 0;
-const wrapper = document.getElementById('pages-wrapper');
+let swipeStartX = 0, swipeStartY = 0;
+let swipeDx = 0;
+let swiping = false;
+let scrollLocked = false;
 
-function goToPage(i) {
-  curPage = i;
-  wrapper.style.transform = `translateX(-${i*20}%)`;
-  document.querySelectorAll('.nav-item').forEach((el,j) => el.classList.toggle('active',j===i));
-  if (fabOpen) toggleFab();
-}
+function getOffset() { return -curPage * 20; }
 
-// Touch swipe
-wrapper.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
-wrapper.addEventListener('touchend', e => {
-  const dx = e.changedTouches[0].clientX - touchX;
-  if (Math.abs(dx) > 60) {
-    const dir = dx < 0 ? 1 : -1;
-    const next = Math.max(0, Math.min(4, curPage + dir));
-    goToPage(next);
-  }
+deck.addEventListener('touchstart', e => {
+  // Don't swipe if overlay is open or panel is open
+  if (document.querySelector('.ov.show') || document.querySelector('.panel.open')) return;
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+  swipeDx = 0; swiping = false; scrollLocked = false;
+  deck.classList.remove('animating');
 }, {passive:true});
 
-// ─── FAB ─────────────────────────────────────────
-function toggleFab() {
-  fabOpen = !fabOpen;
-  document.getElementById('fab-menu').classList.toggle('open', fabOpen);
-  document.getElementById('fab-btn').textContent = fabOpen ? '✕' : '+';
-  document.getElementById('fab-btn').style.transform = fabOpen ? 'rotate(45deg)' : '';
+deck.addEventListener('touchmove', e => {
+  if (document.querySelector('.ov.show') || document.querySelector('.panel.open')) return;
+  const dx = e.touches[0].clientX - swipeStartX;
+  const dy = e.touches[0].clientY - swipeStartY;
+  if (!scrollLocked && !swiping) {
+    if (Math.abs(dy) > Math.abs(dx) + 4) { scrollLocked = true; return; }
+    if (Math.abs(dx) > 6) swiping = true;
+  }
+  if (scrollLocked || !swiping) return;
+  swipeDx = dx;
+  const pct = getOffset() + (swipeDx / window.innerWidth) * 20;
+  deck.style.transform = `translateX(${pct}%)`;
+}, {passive:true});
+
+deck.addEventListener('touchend', () => {
+  if (!swiping) return;
+  deck.classList.add('animating');
+  const threshold = window.innerWidth * 0.28;
+  if (swipeDx < -threshold && curPage < 4) curPage++;
+  else if (swipeDx > threshold && curPage > 0) curPage--;
+  deck.style.transform = `translateX(${getOffset()}%)`;
+  updateNav();
+  if (fabOpen) closeFab();
+  setTimeout(() => deck.classList.remove('animating'), 340);
+}, {passive:true});
+
+function goTo(i) {
+  curPage = i;
+  deck.classList.add('animating');
+  deck.style.transform = `translateX(${getOffset()}%)`;
+  updateNav();
+  if (fabOpen) closeFab();
+  setTimeout(() => deck.classList.remove('animating'), 340);
 }
 
-// ─── FORMAT ──────────────────────────────────────
-const fmt = n => new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
-const fmtD = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short',year:'numeric'}) : '';
-const fmtShort = d => d ? new Date(d+'T00:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'}) : '';
-const uid = () => Math.random().toString(36).slice(2)+Date.now().toString(36);
+function updateNav() {
+  document.querySelectorAll('.ni').forEach((el,i) => el.classList.toggle('active', i===curPage));
+}
 
-// ─── RENDER ──────────────────────────────────────
+// ══════════════════════════════════════════════
+// SLIDE PANELS (back nav)
+// ══════════════════════════════════════════════
+function openPanel(id) { document.getElementById(id).classList.add('open'); }
+function closePanel(id) { document.getElementById(id).classList.remove('open'); }
+
+// ══════════════════════════════════════════════
+// FAB
+// ══════════════════════════════════════════════
+function toggleFab() { fabOpen ? closeFab() : openFab(); }
+function openFab() {
+  fabOpen = true;
+  document.getElementById('fab-menu').classList.add('open');
+  document.getElementById('fab-bd').classList.add('show');
+  document.getElementById('fab').textContent = '✕';
+  document.getElementById('fab').style.transform = 'rotate(45deg)';
+}
+function closeFab() {
+  fabOpen = false;
+  document.getElementById('fab-menu').classList.remove('open');
+  document.getElementById('fab-bd').classList.remove('show');
+  document.getElementById('fab').textContent = '+';
+  document.getElementById('fab').style.transform = '';
+}
+
+// ══════════════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════════════
 function render() {
-  renderDash();
-  renderProjects();
-  renderTxList();
-  renderDocs();
-  renderSettings();
-  updateFilter();
+  renderDash(); renderProjects(); renderFlux(); renderDocs(); renderSettings();
+  updateFilterPill();
 }
 
-function filtered(items) {
-  if (!S.filter) return items;
-  return items.filter(t => t.project === S.filter);
+function filtered(arr) {
+  return S.filter ? arr.filter(t => t.project === S.filter) : arr;
 }
 
 function renderDash() {
   const txs = filtered(S.transactions);
   const totalIn = txs.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
-  const totalOut = txs.filter(t=>t.type!=='in').reduce((a,t)=>a+t.amount,0);
+  const totalOut = txs.filter(t=>t.type==='out').reduce((a,t)=>a+t.amount,0);
   const bal = totalIn - totalOut;
-
-  const balEl = document.getElementById('d-balance');
-  balEl.textContent = fmt(bal);
-  balEl.className = 'hero-amount ' + (bal>=0?'pos':'neg');
+  const el = document.getElementById('d-bal');
+  el.textContent = fmt(bal);
+  el.className = 'hero-amt '+(bal>=0?'pos':'neg');
   document.getElementById('d-in').textContent = fmt(totalIn);
   document.getElementById('d-out').textContent = fmt(totalOut);
+  document.getElementById('d-date').textContent = new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
-  const now = new Date();
-  document.getElementById('dash-date').textContent = now.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
-
-  const recents = txs.filter(t=>t.type!=='invoice'&&t.type!=='receipt').slice().reverse().slice(0,5);
-  const rl = document.getElementById('recent-list');
-  rl.innerHTML = recents.length ? recents.map(txRow).join('') : '<div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction</div></div>';
-
-  const recInvs = txs.filter(t=>t.type==='invoice').slice().reverse().slice(0,3);
-  const ri = document.getElementById('recent-invs');
-  ri.innerHTML = recInvs.length ? recInvs.map(docCardHTML).join('') : '';
+  const recent = txs.slice().reverse().slice(0,6);
+  const c = document.getElementById('d-recent');
+  c.innerHTML = recent.length ? recent.map(t=>txRowHTML(t,true)).join('') : '<div class="empty"><div class="empty-i">&#128184;</div><div class="empty-t">Aucune transaction</div></div>';
 }
 
 function renderProjects() {
   const active = S.projects.filter(p=>p.status!=='done');
   const done = S.projects.filter(p=>p.status==='done');
-  document.getElementById('proj-subtitle').textContent = `${active.length} actif${active.length!==1?'s':''} · ${done.length} terminé${done.length!==1?'s':''}`;
-  document.getElementById('active-projs').innerHTML = active.length ? active.map(projCardHTML).join('') : '<div class="empty" style="padding:24px"><div class="empty-text">Aucun projet en cours</div></div>';
-  document.getElementById('done-projs').innerHTML = done.length ? done.map(projCardHTML).join('') : '<div class="empty" style="padding:24px"><div class="empty-text">Aucun projet terminé</div></div>';
+  document.getElementById('proj-sub').textContent = `${active.length} actif${active.length!==1?'s':''} · ${done.length} termine${done.length!==1?'s':''}`;
+  document.getElementById('projs-active').innerHTML = active.length ? active.map(projCardHTML).join('') : '<div class="empty" style="padding:20px"><div class="empty-t">Aucun projet en cours</div></div>';
+  document.getElementById('projs-done').innerHTML = done.length ? done.map(projCardHTML).join('') : '<div class="empty" style="padding:20px"><div class="empty-t">Aucun projet termine</div></div>';
 }
 
-function renderTxList() {
-  const txs = filtered(S.transactions).filter(t=>t.type!=='invoice'&&t.type!=='receipt').slice().reverse();
-  const el = document.getElementById('all-tx-list');
-  el.innerHTML = txs.length ? txs.map(txRow).join('') : '<div class="empty"><div class="empty-icon">💸</div><div class="empty-text">Aucune transaction.<br>Ajoutez une entrée ou sortie.</div></div>';
+function renderFlux() {
+  const txs = filtered(S.transactions).slice().reverse();
+  document.getElementById('all-tx').innerHTML = txs.length ? txs.map(t=>txRowHTML(t,true)).join('') : '<div class="empty"><div class="empty-i">&#128184;</div><div class="empty-t">Aucune transaction</div></div>';
 }
 
 function renderDocs() {
-  const invs = filtered(S.transactions).filter(t=>t.type==='invoice').slice().reverse();
-  const recs = filtered(S.transactions).filter(t=>t.type==='receipt').slice().reverse();
-  document.getElementById('inv-list-main').innerHTML = invs.length ? invs.map(docCardHTML).join('') : '<div class="empty"><div class="empty-icon">🧾</div><div class="empty-text">Aucune facture</div></div>';
-  document.getElementById('rec-list-main').innerHTML = recs.length ? recs.map(docCardHTML).join('') : '<div class="empty"><div class="empty-icon">📎</div><div class="empty-text">Aucun justificatif</div></div>';
+  const all = filtered(S.transactions);
+  const withFile = all.filter(t=>t.fileData);
+  const facs = withFile.filter(t=>['invoice','quote'].includes(t.docType)).slice().reverse();
+  const recs = withFile.filter(t=>!['invoice','quote'].includes(t.docType) || !t.docType).slice().reverse();
+
+  document.getElementById('docs-fac').innerHTML = facs.length
+    ? '<div class="card-flush" style="margin-top:12px">'+facs.map(t=>docRowHTML(t)).join('')+'</div>'
+    : '<div class="empty"><div class="empty-i">&#128203;</div><div class="empty-t">Aucune facture jointe</div></div>';
+
+  document.getElementById('docs-rec').innerHTML = recs.length
+    ? '<div class="card-flush" style="margin-top:12px">'+recs.map(t=>docRowHTML(t)).join('')+'</div>'
+    : '<div class="empty"><div class="empty-i">&#128203;</div><div class="empty-t">Aucun justificatif joint</div></div>';
 }
 
 function renderSettings() {
-  document.getElementById('app-stats').innerHTML = [
-    `<span class="chip muted">${S.projects.length} projets</span>`,
-    `<span class="chip muted">${S.transactions.filter(t=>t.type!=='invoice'&&t.type!=='receipt').length} transactions</span>`,
-    `<span class="chip muted">${S.transactions.filter(t=>t.type==='invoice').length} factures</span>`,
-    `<span class="chip muted">${S.transactions.filter(t=>t.type==='receipt').length} justificatifs</span>`,
-  ].join('');
+  const txs = S.transactions;
+  document.getElementById('app-info').innerHTML = `
+    <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:6px;color:var(--text)">FinFlow v3</div>
+    <div>${S.projects.length} projet${S.projects.length!==1?'s':''} · ${txs.length} transaction${txs.length!==1?'s':''}</div>
+    <div>${txs.filter(t=>t.fileData).length} piece${txs.filter(t=>t.fileData).length!==1?'s':''} jointe${txs.filter(t=>t.fileData).length!==1?'s':''}</div>
+    <div style="margin-top:8px;font-size:12px">Donnees stockees localement sur cet appareil.</div>`;
 }
 
-function updateFilter() {
+function updateFilterPill() {
   const p = S.projects.find(x=>x.id===S.filter);
-  document.getElementById('pf-name').textContent = p ? p.name : 'Tous';
+  document.getElementById('pf-nm').textContent = p ? p.name : 'Tous';
   document.getElementById('pf-dot').style.background = p ? p.color : 'var(--accent)';
 }
 
-// ─── HTML BUILDERS ───────────────────────────────
-function txRow(t) {
-  const icons = {in:'↑',out:'↓',invoice:'🧾',receipt:'📎'};
-  const sign = t.type==='in' ? '+' : '−';
+// ══════════════════════════════════════════════
+// HTML BUILDERS
+// ══════════════════════════════════════════════
+function txRowHTML(t, clickable) {
   const proj = S.projects.find(p=>p.id===t.project);
-  const projTag = proj ? `<span class="chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
-  return `<div class="tx-item">
-    <div class="tx-icon ${t.type}">${icons[t.type]||'•'}</div>
-    <div class="tx-info">
-      <div class="tx-name">${t.desc||'Sans titre'}</div>
-      <div class="tx-sub">${fmtShort(t.date)} ${projTag}</div>
+  const sign = t.type==='in' ? '+' : '−';
+  const ico = t.type==='in' ? '&#8593;' : '&#8595;';
+  const clip = t.fileData ? '<span class="paper-clip">PJ</span>' : '';
+  const ptag = proj ? `<span class="chip" style="background:${proj.color}22;color:${proj.color};flex-shrink:0">${proj.name}</span>` : '';
+  const onclick = clickable ? `onclick="openTxDetail('${t.id}')"` : '';
+  return `<div class="txr" ${onclick}>
+    <div class="tx-ico ${t.type}">${ico}</div>
+    <div class="tx-inf">
+      <div class="tx-n">${esc(t.desc||'Sans titre')}</div>
+      <div class="tx-s">${fmtDs(t.date)} ${clip} ${ptag}</div>
     </div>
-    <div style="text-align:right">
-      <div class="tx-amount ${t.type}">${sign}${fmt(t.amount)}</div>
-      <button class="delete-btn" style="margin-top:4px;font-size:11px;padding:4px 10px" onclick="delTx('${t.id}')">Suppr.</button>
-    </div>
+    <div class="tx-amt ${t.type}">${sign}${fmt(t.amount)}</div>
   </div>`;
 }
 
-function docCardHTML(t) {
-  const statusLabel = {paid:'Payée',pending:'En attente',overdue:'En retard'}[t.invStatus||'pending'];
-  const statusClass = {paid:'green',pending:'amber',overdue:'red'}[t.invStatus||'pending'];
-  const isInv = t.type==='invoice';
+function docRowHTML(t) {
   const proj = S.projects.find(p=>p.id===t.project);
-  const thumb = t.fileData
-    ? (t.fileType==='pdf' ? `<div style="display:flex;align-items:center;justify-content:center;width:48px;height:60px;border-radius:8px;background:var(--amber-bg);font-size:22px">📄</div>`
-      : `<img src="${t.fileData}" style="width:48px;height:60px;object-fit:cover;border-radius:8px;cursor:pointer" onclick="viewPhoto('${t.id}')">`)
-    : `<div style="width:48px;height:60px;border-radius:8px;background:var(--surface3);display:flex;align-items:center;justify-content:center;font-size:22px">${isInv?'🧾':'📎'}</div>`;
-  return `<div class="doc-card">
+  const dtLabel = {invoice:'Facture',receipt:'Justificatif',quote:'Devis',other:'Document'}[t.docType]||'Piece jointe';
+  const thumb = t.fileType==='pdf'
+    ? `<div style="width:36px;height:44px;background:var(--amber-bg);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">PDF</div>`
+    : `<img src="${t.fileData}" style="width:36px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;cursor:pointer" onclick="viewPhoto('${t.id}')">`;
+  return `<div class="txr" onclick="openTxDetail('${t.id}')">
     ${thumb}
-    <div class="doc-info">
-      <div class="doc-name">${isInv?(t.invNum?t.invNum+' — ':'')+(t.client||t.desc||'Facture') : (t.desc||'Justificatif')}</div>
-      <div class="doc-sub">${fmtD(t.date)}${t.due?' · Éch. '+fmtD(t.due):''}${proj?' · '+proj.name:''}</div>
-      <div class="doc-amount">${fmt(t.amount)}</div>
-      ${isInv?`<div class="doc-status"><span class="chip ${statusClass}"><span class="status-dot ${t.invStatus||'pending'}"></span>${statusLabel}</span>${t.invStatus!=='paid'?`<button class="delete-btn" style="background:var(--green-bg);color:var(--green);border:none;margin-left:6px;padding:3px 10px;font-size:11px" onclick="markPaid('${t.id}')">Payée</button>`:''}</div>`:''}
-      <div style="margin-top:6px"><button class="delete-btn" style="font-size:11px;padding:4px 10px" onclick="delTx('${t.id}')">Suppr.</button></div>
+    <div class="tx-inf">
+      <div class="tx-n">${esc(t.ref||t.vendor||t.desc||'Document')}</div>
+      <div class="tx-s">${dtLabel} · ${fmtDs(t.date)}${proj?' · '+proj.name:''}</div>
     </div>
+    <div class="tx-amt ${t.type}" style="font-size:13px">${fmt(t.amount)}</div>
   </div>`;
 }
 
 function projCardHTML(p) {
   const txs = S.transactions.filter(t=>t.project===p.id);
   const totalIn = txs.filter(t=>t.type==='in').reduce((a,t)=>a+t.amount,0);
-  const totalOut = txs.filter(t=>t.type!=='in').reduce((a,t)=>a+t.amount,0);
+  const totalOut = txs.filter(t=>t.type==='out').reduce((a,t)=>a+t.amount,0);
   const bal = totalIn-totalOut;
-  const invCount = txs.filter(t=>t.type==='invoice').length;
-  const recCount = txs.filter(t=>t.type==='receipt').length;
+  const docs = txs.filter(t=>t.fileData).length;
   const isDone = p.status==='done';
-  return `<div class="proj-card ${S.filter===p.id?'active-proj':''}">
-    <div class="proj-card-accent" style="background:${p.color}"></div>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-      <div class="proj-name">${p.name}</div>
-      <span class="chip ${isDone?'green':'muted'}" style="flex-shrink:0;margin-left:8px">${isDone?'✅ Terminé':'🟢 En cours'}</span>
+  return `<div class="pc">
+    <div class="pc-stripe" style="background:${p.color}"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2px;padding-left:6px">
+      <div class="pc-name">${esc(p.name)}</div>
+      <span class="chip ${isDone?'g':'m'}" style="flex-shrink:0;margin-left:8px">${isDone?'Termine':'En cours'}</span>
     </div>
-    ${p.desc?`<div class="proj-meta">${p.desc}</div>`:'<div class="proj-meta" style="margin-bottom:12px"></div>'}
-    <div class="proj-stats">
-      <div class="proj-stat"><div class="proj-stat-label">Entrées</div><div class="proj-stat-val" style="color:var(--green)">${fmt(totalIn)}</div></div>
-      <div class="proj-stat"><div class="proj-stat-label">Sorties</div><div class="proj-stat-val" style="color:var(--red)">${fmt(totalOut)}</div></div>
-      <div class="proj-stat"><div class="proj-stat-label">Solde</div><div class="proj-stat-val" style="color:${bal>=0?'var(--green)':'var(--red)'}">${fmt(bal)}</div></div>
+    ${p.desc?`<div class="pc-sub" style="padding-left:6px">${esc(p.desc)}</div>`:'<div style="height:8px"></div>'}
+    <div class="pc-grid" style="padding-left:6px">
+      <div class="pcs"><div class="pcs-lbl">Entrees</div><div class="pcs-val" style="color:var(--green)">${fmt(totalIn)}</div></div>
+      <div class="pcs"><div class="pcs-lbl">Sorties</div><div class="pcs-val" style="color:var(--red)">${fmt(totalOut)}</div></div>
+      <div class="pcs"><div class="pcs-lbl">Solde</div><div class="pcs-val" style="color:${bal>=0?'var(--green)':'var(--red)'}">${fmt(bal)}</div></div>
     </div>
-    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap">
-      ${invCount?`<span class="chip amber">🧾 ${invCount} facture${invCount>1?'s':''}</span>`:''}
-      ${recCount?`<span class="chip blue">📎 ${recCount} pièce${recCount>1?'s':''}</span>`:''}
-    </div>
-    <div class="proj-actions">
-      <button class="proj-btn" onclick="filterProject('${p.id}');goToPage(0)">Filtrer</button>
-      <button class="proj-btn" onclick="toggleProjStatus('${p.id}')">${isDone?'Réactiver':'Terminer'}</button>
-      <button class="proj-btn accent" onclick="openBilan('${p.id}')">📊 Bilan</button>
+    ${docs?`<div style="padding-left:6px;margin-top:8px"><span class="chip b">${docs} piece${docs>1?'s':''} jointe${docs>1?'s':''}</span></div>`:''}
+    <div class="pc-btns" style="padding-left:6px">
+      <button class="pcb" onclick="event.stopPropagation();toggleFilter('${p.id}')">${S.filter===p.id?'Retirer filtre':'Filtrer'}</button>
+      <button class="pcb" onclick="event.stopPropagation();toggleDone('${p.id}')">${isDone?'Reactiver':'Terminer'}</button>
+      <button class="pcb accent" onclick="event.stopPropagation();openBilan('${p.id}')">Bilan</button>
     </div>
   </div>`;
 }
 
-// ─── ACTIONS ─────────────────────────────────────
-function delTx(id) {
-  if (!confirm('Supprimer ?')) return;
-  S.transactions = S.transactions.filter(t=>t.id!==id);
-  save(); render();
-}
-function markPaid(id) {
-  const t = S.transactions.find(t=>t.id===id);
-  if (t) { t.invStatus='paid'; save(); render(); }
-}
-function filterProject(id) {
-  S.filter = S.filter===id ? null : id;
-  save(); render();
-}
-function toggleProjStatus(id) {
-  const p = S.projects.find(p=>p.id===id);
-  if (p) { p.status = p.status==='done' ? 'active' : 'done'; save(); render(); }
+// ══════════════════════════════════════════════
+// TX DETAIL PANEL
+// ══════════════════════════════════════════════
+function openTxDetail(id) {
+  const t = S.transactions.find(x=>x.id===id);
+  if (!t) return;
+  const proj = S.projects.find(p=>p.id===t.project);
+  const dtLabel = {invoice:'Facture',receipt:'Justificatif',quote:'Devis',other:'Autre'}[t.docType]||'—';
+  const statusLabel = {paid:'Payee',pending:'En attente',overdue:'En retard'}[t.invStatus]||'—';
+
+  let html = `
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px">
+      <div class="tx-ico ${t.type}" style="width:52px;height:52px;border-radius:14px;font-size:22px">${t.type==='in'?'&#8593;':'&#8595;'}</div>
+      <div>
+        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700">${fmt(t.amount)}</div>
+        <div style="font-size:13px;color:var(--muted)">${t.type==='in'?'Entree':'Sortie'}</div>
+      </div>
+    </div>
+    <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-bottom:20px">
+      ${row('Description', esc(t.desc||'—'))}
+      ${row('Date', fmtD(t.date))}
+      ${row('Projet', proj?`<span class="chip" style="background:${proj.color}22;color:${proj.color}">${esc(proj.name)}</span>`:'—')}
+      ${t.notes?row('Notes', esc(t.notes)):''}
+      ${t.ref?row('Reference', esc(t.ref)):''}
+      ${t.vendor?row('Emetteur', esc(t.vendor)):''}
+      ${t.docType?row('Type document', dtLabel):''}
+      ${t.invStatus?row('Statut', statusLabel):''}
+    </div>`;
+
+  if (t.fileData) {
+    if (t.fileType==='pdf') {
+      html += `<div style="background:var(--amber-bg);border-radius:var(--rsm);padding:14px;margin-bottom:16px;display:flex;align-items:center;gap:12px">
+        <div style="font-size:24px">PDF</div>
+        <div><div style="font-size:14px;font-weight:500">${esc(t.fileName||'Document.pdf')}</div><div style="font-size:12px;color:var(--muted)">Piece jointe PDF</div></div>
+      </div>`;
+    } else {
+      html += `<img src="${t.fileData}" onclick="viewPhoto('${t.id}')" style="width:100%;border-radius:var(--rsm);margin-bottom:16px;cursor:pointer;display:block">`;
+    }
+  }
+
+  html += `<button class="del-btn" style="width:100%;height:44px;font-size:14px" onclick="deleteTx('${t.id}')">Supprimer cette operation</button>`;
+
+  document.getElementById('pan-tx-title').textContent = t.desc||'Detail';
+  document.getElementById('pan-tx-body').innerHTML = html;
+  openPanel('pan-tx');
 }
 
-// ─── PROJECT SELECTOR ────────────────────────────
-function openProjSelector() {
-  const all = [{id:null,name:'Tous les projets',color:'var(--accent)'},...S.projects];
-  document.getElementById('ps-list').innerHTML = all.map(p=>`
-    <div onclick="chooseFilter(${p.id?`'${p.id}'`:null})" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer">
-      <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
-      <span style="font-size:15px;font-weight:500">${p.name}</span>
-      ${S.filter===p.id?'<span style="margin-left:auto;color:var(--accent);font-size:18px">✓</span>':''}
-    </div>`).join('');
-  document.getElementById('overlay-ps').classList.add('show');
-}
-function chooseFilter(id) {
-  S.filter=id; save(); render();
-  document.getElementById('overlay-ps').classList.remove('show');
+function row(label, val) {
+  return `<div class="detail-row"><span class="dr-lbl">${label}</span><span class="dr-val">${val}</span></div>`;
 }
 
-// ─── BILAN ───────────────────────────────────────
+// ══════════════════════════════════════════════
+// BILAN PROFESSIONNEL
+// ══════════════════════════════════════════════
 function openBilan(id) {
-  currentBilanId = id;
+  curBilanId = id;
   const p = S.projects.find(x=>x.id===id);
   const txs = S.transactions.filter(t=>t.project===id);
   const ins = txs.filter(t=>t.type==='in');
   const outs = txs.filter(t=>t.type==='out');
-  const invs = txs.filter(t=>t.type==='invoice');
-  const recs = txs.filter(t=>t.type==='receipt');
   const totalIn = ins.reduce((a,t)=>a+t.amount,0);
   const totalOut = outs.reduce((a,t)=>a+t.amount,0);
-  const totalInv = invs.reduce((a,t)=>a+t.amount,0);
-  const totalInvPaid = invs.filter(t=>t.invStatus==='paid').reduce((a,t)=>a+t.amount,0);
-  const totalRec = recs.reduce((a,t)=>a+t.amount,0);
-  const totalExpenses = totalOut + totalInv;
-  const bal = totalIn - totalExpenses;
-  const ratio = totalIn > 0 ? Math.min(totalExpenses/totalIn,1) : 0;
+  const bal = totalIn - totalOut;
+  const docs = txs.filter(t=>t.fileData);
+  const ratio = totalIn>0 ? Math.min(totalOut/totalIn,1) : 0;
+  const pct = Math.round(ratio*100);
+  const progClass = ratio<.6?'':ratio<.85?'warn':'danger';
+  const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
 
-  document.getElementById('bilan-content').innerHTML = `
-    <div class="bilan-hero">
-      <div class="bilan-name">${p.name}</div>
-      <div style="font-size:12px;color:var(--muted)">${p.status==='done'?'✅ Projet terminé':'🟢 En cours · '+txs.length+' opérations'}</div>
-      <div class="bilan-balance" style="color:${bal>=0?'var(--accent)':'var(--red)'}">${fmt(bal)}</div>
-      <div style="font-size:12px;color:var(--muted);margin-top:4px">Solde net</div>
-      <div class="progress-bar" style="margin-top:16px">
-        <div class="progress-fill ${bal<0?'neg':''}" style="width:${ratio*100}%"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px">
-        <span>Dépenses ${Math.round(ratio*100)}% des revenus</span>
-        <span>${fmt(totalExpenses)} / ${fmt(totalIn)}</span>
+  const bilanHTML = `
+    <div class="bilan-cover">
+      <div class="bilan-proj">${esc(p.name)}</div>
+      <div class="bilan-date">Etabli le ${today} · ${p.status==='done'?'Projet termine':'Projet en cours'}</div>
+      <div class="bilan-net-lbl">Solde net</div>
+      <div class="bilan-net ${bal>=0?'pos':'neg'}">${fmt(bal)}</div>
+      <div class="prog-wrap">
+        <div class="prog-lbl"><span>Depenses / Recettes</span><span>${pct}%</span></div>
+        <div class="prog"><div class="prog-fill ${progClass}" style="width:${pct}%"></div></div>
       </div>
     </div>
 
-    <div style="background:var(--surface2);border-radius:var(--radius-sm);overflow:hidden">
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">💰 Entrées totales</span><span class="bilan-val" style="color:var(--green)">${fmt(totalIn)}</span></div>
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— Transactions entrantes</span><span class="bilan-val">${ins.length} × ${fmt(totalIn)}</span></div>
-
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">💸 Sorties directes</span><span class="bilan-val" style="color:var(--red)">${fmt(totalOut)}</span></div>
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">🧾 Factures (total)</span><span class="bilan-val" style="color:var(--amber)">${fmt(totalInv)}</span></div>
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— dont payées</span><span class="bilan-val" style="color:var(--green)">${fmt(totalInvPaid)}</span></div>
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label" style="padding-left:12px">— en attente</span><span class="bilan-val" style="color:var(--amber)">${fmt(totalInv-totalInvPaid)}</span></div>
-      <div class="bilan-row" style="padding:12px 14px"><span class="bilan-label">📎 Justificatifs</span><span class="bilan-val">${recs.length} pièce${recs.length>1?'s':''}</span></div>
+    <div class="bilan-section">
+      <div class="bilan-sec-title">Recapitulatif</div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-top:10px">
+        <div class="bilan-total-row">
+          <span class="bilan-total-lbl">Total des recettes</span>
+          <span class="bilan-total-val" style="color:var(--green)">${fmt(totalIn)}</span>
+        </div>
+        <div style="height:1px;background:var(--border)"></div>
+        <div class="bilan-total-row">
+          <span class="bilan-total-lbl">Total des depenses</span>
+          <span class="bilan-total-val" style="color:var(--red)">${fmt(totalOut)}</span>
+        </div>
+        <div style="height:1px;background:var(--border)"></div>
+        <div class="bilan-total-row" style="background:var(--surface3)">
+          <span class="bilan-total-lbl">Solde net</span>
+          <span class="bilan-total-val" style="color:${bal>=0?'var(--accent)':'var(--red)'};font-size:18px">${fmt(bal)}</span>
+        </div>
+      </div>
     </div>
 
-    ${txs.length > 0 ? `
-    <div style="margin-top:16px">
-      <div class="section-title" style="margin-bottom:10px">DÉTAIL DES OPÉRATIONS</div>
-      <div style="background:var(--surface2);border-radius:var(--radius-sm);overflow:hidden;padding:0 14px">
-        ${txs.slice().reverse().map(t=>`
-        <div class="bilan-row">
-          <div>
-            <div style="font-size:13px;font-weight:500">${t.desc||'Sans titre'}</div>
-            <div style="font-size:11px;color:var(--muted)">${fmtD(t.date)} · ${{in:'Entrée',out:'Sortie',invoice:'Facture',receipt:'Justificatif'}[t.type]}</div>
-          </div>
-          <span style="font-size:14px;font-weight:500;color:${t.type==='in'?'var(--green)':t.type==='invoice'?'var(--amber)':'var(--red)'}">${t.type==='in'?'+':'−'}${fmt(t.amount)}</span>
+    ${ins.length?`
+    <div class="bilan-section">
+      <div class="bilan-sec-title">Detail des recettes (${ins.length} operations)</div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-top:10px;padding:0 14px">
+        ${ins.map(t=>`<div class="bilan-tx-row">
+          <div><div class="btx-lbl">${esc(t.desc||'—')}</div><div class="btx-sub">${fmtD(t.date)}</div></div>
+          <span class="btx-amt" style="color:var(--green)">+${fmt(t.amount)}</span>
         </div>`).join('')}
       </div>
-    </div>` : ''}
-  `;
-  document.getElementById('overlay-bilan').classList.add('show');
+    </div>`:''}
+
+    ${outs.length?`
+    <div class="bilan-section">
+      <div class="bilan-sec-title">Detail des depenses (${outs.length} operations)</div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-top:10px;padding:0 14px">
+        ${outs.map(t=>`<div class="bilan-tx-row">
+          <div>
+            <div class="btx-lbl">${esc(t.desc||'—')}</div>
+            <div class="btx-sub">${fmtD(t.date)}${t.vendor?' · '+esc(t.vendor):''}${t.ref?' · '+esc(t.ref):''}${t.fileData?` · <span style="font-size:10px;background:var(--surface3);padding:1px 5px;border-radius:3px;color:var(--muted2)">${t.fileType==='pdf'?'PDF':'Photo'} joint</span>`:''}</div>
+          </div>
+          <span class="btx-amt" style="color:var(--red)">-${fmt(t.amount)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    ${docs.length?`
+    <div class="bilan-section">
+      <div class="bilan-sec-title">Pieces justificatives (${docs.length})</div>
+      <div style="background:var(--surface2);border-radius:var(--rsm);overflow:hidden;margin-top:10px;padding:0 14px">
+        ${docs.map(t=>`<div class="bilan-tx-row">
+          <div>
+            <div class="btx-lbl">${esc(t.ref||t.vendor||t.desc||'Document')}</div>
+            <div class="btx-sub">${fmtD(t.date)} · ${{invoice:'Facture',receipt:'Justificatif',quote:'Devis',other:'Autre'}[t.docType]||'Piece jointe'} · ${t.fileType==='pdf'?'PDF':'Photo'}</div>
+          </div>
+          <span class="btx-amt">${fmt(t.amount)}</span>
+        </div>`).join('')}
+      </div>
+    </div>`:''}
+
+    <div style="margin-top:24px;padding:14px;background:var(--surface2);border-radius:var(--rsm);font-size:12px;color:var(--muted);line-height:1.7;border-left:3px solid var(--border2)">
+      Ce bilan est genere automatiquement sur la base des donnees saisies dans l'application FinFlow.
+      Il recense l'ensemble des operations enregistrees pour le projet "${esc(p.name)}" a la date du ${today}.
+      ${docs.length?`${docs.length} piece${docs.length>1?'s':''} justificative${docs.length>1?'s':''} ${docs.length>1?'sont annexees':'est annexee'} au present bilan.`:''}
+    </div>`;
+
+  document.getElementById('pan-bilan-body').innerHTML = bilanHTML;
+  openPanel('pan-bilan');
 }
 
-function printBilan() {
-  const p = S.projects.find(x=>x.id===currentBilanId);
-  const content = document.getElementById('bilan-content').innerText;
+function exportBilan() {
+  const p = S.projects.find(x=>x.id===curBilanId);
+  const body = document.getElementById('pan-bilan-body').innerHTML;
+  const today = new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'});
   const w = window.open('','_blank');
-  w.document.write(`<html><head><title>Bilan — ${p?.name}</title><style>body{font-family:sans-serif;padding:32px;max-width:600px;margin:auto}h1{margin-bottom:8px}pre{white-space:pre-wrap;font-size:14px;line-height:1.7}</style></head><body><h1>Bilan financier — ${p?.name}</h1><pre>${content}</pre></body></html>`);
+  w.document.write(`<!DOCTYPE html><html lang="fr"><head><meta charset="UTF-8">
+  <title>Bilan — ${p?.name}</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700&family=DM+Sans:wght@400;500&display=swap');
+    :root{--green:#1a7a4a;--red:#c0392b;--accent:#5a8a00;--border:#e0ddd5;--bg:#fff;--surface:#f8f7f3;--surface2:#f0efe9;--surface3:#e8e7e0;--muted:#888;--muted2:#555;--text:#1a1a18}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'DM Sans',sans-serif;color:var(--text);max-width:720px;margin:0 auto;padding:32px 24px;background:#fff;font-size:14px;line-height:1.6}
+    .bilan-cover{background:var(--surface);border-radius:10px;padding:24px;margin-bottom:24px;border-left:4px solid var(--accent)}
+    .bilan-proj{font-family:'Syne',sans-serif;font-size:24px;font-weight:700;margin-bottom:4px}
+    .bilan-date{font-size:12px;color:var(--muted);margin-bottom:16px}
+    .bilan-net-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:4px}
+    .bilan-net{font-family:'Syne',sans-serif;font-size:36px;font-weight:700}
+    .bilan-net.pos{color:var(--accent)} .bilan-net.neg{color:var(--red)}
+    .prog-wrap{margin:14px 0 0}
+    .prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:5px}
+    .prog{height:5px;background:var(--surface3);border-radius:3px}
+    .prog-fill{height:100%;border-radius:3px;background:var(--green)}
+    .prog-fill.warn{background:#b07800} .prog-fill.danger{background:var(--red)}
+    .bilan-section{margin-bottom:24px}
+    .bilan-sec-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;padding-bottom:8px;border-bottom:1.5px solid var(--border);margin-bottom:0}
+    .bilan-total-row{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;background:var(--surface)}
+    .bilan-total-row:nth-child(2){background:var(--surface2)}
+    .bilan-total-row:nth-child(4){background:var(--surface3)}
+    .bilan-total-lbl{font-size:13px;font-weight:600}
+    .bilan-total-val{font-size:15px;font-weight:700}
+    .bilan-tx-row{display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border)}
+    .bilan-tx-row:last-child{border:none}
+    .btx-lbl{font-size:13px;max-width:65%}
+    .btx-sub{font-size:11px;color:var(--muted)}
+    .btx-amt{font-size:13px;font-weight:500}
+    div[style*="border-left:3px"]{border-left:3px solid #ccc!important;background:var(--surface)!important;border-radius:6px!important;padding:14px!important;font-size:12px!important;color:var(--muted)!important}
+    @media print{body{padding:20px}}
+    .chip{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500}
+    .chip.g{background:#e8f5ee;color:var(--green)}
+    .chip.m{background:var(--surface2);color:var(--muted2)}
+  </style></head>
+  <body>${body}
+  <div style="margin-top:32px;text-align:center;font-size:11px;color:#aaa;border-top:1px solid var(--border);padding-top:16px">
+    Document genere par FinFlow le ${today}
+  </div>
+  <script>window.onload=()=>window.print()<\/script>
+  </body></html>`);
   w.document.close();
-  w.print();
 }
 
-// ─── DOC TAB ─────────────────────────────────────
-function switchDocTab(t) {
-  docTab = t;
-  document.getElementById('doc-inv-content').style.display = t==='inv'?'':'none';
-  document.getElementById('doc-rec-content').style.display = t==='rec'?'':'none';
-  document.getElementById('doctab-inv').className = 'seg-btn '+(t==='inv'?'active-inv':'');
-  document.getElementById('doctab-rec').className = 'seg-btn '+(t==='rec'?'active-rec':'');
+// ══════════════════════════════════════════════
+// TX MODAL
+// ══════════════════════════════════════════════
+function openTxModal(type) {
+  closeFab();
+  setTxType(type);
+  document.getElementById('tx-desc').value='';
+  document.getElementById('tx-amt').value='';
+  document.getElementById('tx-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('tx-notes').value='';
+  document.getElementById('tx-ref').value='';
+  document.getElementById('tx-vendor').value='';
+  document.getElementById('tx-inv-status').value='paid';
+  document.getElementById('tx-doc-type').value='invoice';
+  pendingFile = null;
+  resetUploadUI();
+  populateProjSel();
+  document.getElementById('ov-tx').classList.add('show');
 }
 
-// ─── ADD MODAL ───────────────────────────────────
-function openModal(type) {
-  if (fabOpen) toggleFab();
-  setType(type);
-  document.getElementById('f-desc').value='';
-  document.getElementById('f-amount').value='';
-  document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-  document.getElementById('f-invnum').value='';
-  document.getElementById('f-client').value='';
-  document.getElementById('f-due').value='';
-  document.getElementById('f-status').value='pending';
-  document.getElementById('f-notes').value='';
-  document.getElementById('f-rec-label').value='';
-  pendingFile = {invoice:null,receipt:null};
-  document.getElementById('inv-preview-wrap').style.display='none';
-  document.getElementById('rec-preview-wrap').style.display='none';
-  document.getElementById('inv-pdf-badge').style.display='none';
-  document.getElementById('rec-pdf-badge').style.display='none';
-  populateProjSelect();
-
-  const titles = {in:'Nouvelle entrée',out:'Nouvelle sortie',invoice:'Nouvelle facture',receipt:'Nouveau justificatif'};
-  document.getElementById('modal-title').textContent = titles[type];
-  document.getElementById('overlay-tx').classList.add('show');
+function setTxType(t) {
+  selTxType = t;
+  document.getElementById('tx-modal-title').textContent = t==='in' ? 'Nouvelle entree' : 'Nouvelle sortie';
+  document.getElementById('sb-in').className = 'sb-'+(t==='in'?' ai':'');
+  document.getElementById('sb-out').className = 'sb-'+(t==='out'?' ao':'');
 }
 
-function setType(t) {
-  selType = t;
-  const map = {in:'in',out:'out',invoice:'inv',receipt:'rec'};
-  ['in','out','invoice','receipt'].forEach(x => {
-    const el = document.getElementById('seg-'+{in:'in',out:'out',invoice:'inv',receipt:'rec'}[x]);
-    if (el) el.className = 'seg-btn';
-  });
-  ['in','out'].forEach(x => {
-    const el = document.getElementById('seg-'+x);
-    if (el) el.className = 'seg-btn'+(t===x?' active-'+x:'');
-  });
-  document.getElementById('type-field').style.display = (t==='invoice'||t==='receipt') ? 'none' : '';
-  document.getElementById('inv-extra').style.display = t==='invoice' ? 'block' : 'none';
-  document.getElementById('rec-extra').style.display = t==='receipt' ? 'block' : 'none';
+function resetUploadUI() {
+  document.getElementById('up-prev').style.display='none';
+  document.getElementById('up-prev').src='';
+  document.getElementById('up-pdf').style.display='none';
+  document.getElementById('up-none').style.display='block';
+  document.getElementById('inv-fields').style.display='none';
 }
 
-// ─── FILE HANDLING ───────────────────────────────
-function handleFile(e, ctx) {
-  const file = e.target.files[0];
-  if (!file) return;
+function handleUpload(e) {
+  const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const data = ev.target.result;
     const isPdf = file.type==='application/pdf';
-    pendingFile[ctx] = {data, type: isPdf?'pdf':'image', name:file.name};
-    if (ctx==='invoice') {
-      document.getElementById('inv-preview-wrap').style.display='block';
-      if (isPdf) {
-        document.getElementById('inv-preview').style.display='none';
-        document.getElementById('inv-pdf-badge').style.display='block';
-      } else {
-        document.getElementById('inv-preview').src=data;
-        document.getElementById('inv-preview').style.display='block';
-        document.getElementById('inv-pdf-badge').style.display='none';
-      }
+    pendingFile = {data:ev.target.result, type:isPdf?'pdf':'image', name:file.name};
+    document.getElementById('up-none').style.display='none';
+    document.getElementById('inv-fields').style.display='block';
+    if (isPdf) {
+      document.getElementById('up-pdf').style.display='block';
+      document.getElementById('up-pdf').textContent='PDF : '+file.name;
+      document.getElementById('up-prev').style.display='none';
     } else {
-      document.getElementById('rec-preview-wrap').style.display='block';
-      if (isPdf) {
-        document.getElementById('rec-preview').style.display='none';
-        document.getElementById('rec-pdf-badge').style.display='block';
-      } else {
-        document.getElementById('rec-preview').src=data;
-        document.getElementById('rec-preview').style.display='block';
-        document.getElementById('rec-pdf-badge').style.display='none';
-      }
+      document.getElementById('up-prev').src=ev.target.result;
+      document.getElementById('up-prev').style.display='block';
+      document.getElementById('up-pdf').style.display='none';
     }
   };
   reader.readAsDataURL(file);
 }
 
-function viewPhoto(id) {
-  const t = S.transactions.find(t=>t.id===id);
-  if (!t||!t.fileData||t.fileType==='pdf') return;
-  document.getElementById('photo-img').src = t.fileData;
-  document.getElementById('photo-viewer').classList.add('show');
-}
-function closePhoto() { document.getElementById('photo-viewer').classList.remove('show'); }
-
-// ─── SUBMIT TX ───────────────────────────────────
 function submitTx() {
-  const desc = document.getElementById('f-desc').value.trim() || document.getElementById('f-rec-label').value.trim();
-  const amount = parseFloat(document.getElementById('f-amount').value);
+  const desc = document.getElementById('tx-desc').value.trim();
+  const amount = parseFloat(document.getElementById('tx-amt').value);
   if (!desc) { alert('Veuillez entrer une description.'); return; }
   if (!amount || amount<=0) { alert('Montant invalide.'); return; }
-
-  const fctx = selType==='invoice' ? 'invoice' : 'receipt';
-  const fileObj = pendingFile[fctx];
-
   const tx = {
-    id:uid(), type:selType, desc, amount,
-    project:document.getElementById('f-project').value||null,
-    date:document.getElementById('f-date').value,
-    fileData: fileObj?.data||null,
-    fileType: fileObj?.type||null,
-    fileName: fileObj?.name||null,
-    invNum:document.getElementById('f-invnum').value.trim(),
-    client:document.getElementById('f-client').value.trim(),
-    due:document.getElementById('f-due').value,
-    invStatus:document.getElementById('f-status').value,
-    notes:document.getElementById('f-notes').value.trim(),
+    id:uid(), type:selTxType, desc, amount,
+    project:document.getElementById('tx-proj').value||null,
+    date:document.getElementById('tx-date').value,
+    notes:document.getElementById('tx-notes').value.trim(),
+    fileData:pendingFile?.data||null,
+    fileType:pendingFile?.type||null,
+    fileName:pendingFile?.name||null,
+    docType:pendingFile?document.getElementById('tx-doc-type').value:null,
+    ref:document.getElementById('tx-ref').value.trim()||null,
+    vendor:document.getElementById('tx-vendor').value.trim()||null,
+    invStatus:pendingFile?document.getElementById('tx-inv-status').value:null,
   };
   S.transactions.push(tx);
   save();
-  document.getElementById('overlay-tx').classList.remove('show');
-
-  if (selType==='invoice'||selType==='receipt') goToPage(3);
-  else goToPage(2);
+  document.getElementById('ov-tx').classList.remove('show');
   render();
 }
 
-// ─── SUBMIT PROJECT ──────────────────────────────
-function openAddProject() {
-  document.getElementById('p-name').value='';
-  document.getElementById('p-desc').value='';
-  selColor=COLORS[0]; selProjStatus='active';
-  const cp = document.getElementById('color-picker');
-  cp.innerHTML = COLORS.map(c=>`<div onclick="pickColor('${c}',this)" style="width:32px;height:32px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===selColor?'#fff':'transparent'};transition:transform .15s" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform=''"></div>`).join('');
-  setProjStatus('active');
-  document.getElementById('overlay-proj').classList.add('show');
-}
-function pickColor(c,el) {
-  selColor=c;
-  document.querySelectorAll('#color-picker div').forEach(d=>d.style.borderColor='transparent');
-  el.style.borderColor='#fff';
-}
-function setProjStatus(s) {
-  selProjStatus=s;
-  document.getElementById('ps-active').className='seg-btn'+(s==='active'?' active-proj':'');
-  document.getElementById('ps-done').className='seg-btn'+(s==='done'?' active-proj':'');
-}
-function submitProject() {
-  const name=document.getElementById('p-name').value.trim();
-  if (!name) { alert('Veuillez entrer un nom.'); return; }
-  S.projects.push({id:uid(),name,color:selColor,desc:document.getElementById('p-desc').value.trim(),status:selProjStatus});
-  save();
-  document.getElementById('overlay-proj').classList.remove('show');
-  render(); goToPage(1);
+function deleteTx(id) {
+  if (!confirm('Supprimer cette operation ?')) return;
+  S.transactions = S.transactions.filter(t=>t.id!==id);
+  save(); render();
+  closePanel('pan-tx');
 }
 
-// ─── UTILS ───────────────────────────────────────
-function populateProjSelect() {
-  document.getElementById('f-project').innerHTML='<option value="">— Aucun projet —</option>'+S.projects.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+// ══════════════════════════════════════════════
+// PROJECTS
+// ══════════════════════════════════════════════
+function openAddProj() {
+  document.getElementById('p-nm').value='';
+  document.getElementById('p-desc').value='';
+  selColor=COLORS[0]; selPSt='active';
+  buildColorPicker();
+  setPSt('active');
+  document.getElementById('ov-proj').classList.add('show');
+}
+
+function buildColorPicker() {
+  document.getElementById('c-pick').innerHTML = COLORS.map(c=>
+    `<div onclick="pickC('${c}',this)" style="width:30px;height:30px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===selColor?'#fff':'transparent'};transition:all .15s"></div>`
+  ).join('');
+}
+function pickC(c,el) {
+  selColor=c;
+  document.querySelectorAll('#c-pick div').forEach(d=>d.style.borderColor='transparent');
+  el.style.borderColor='#fff';
+}
+function setPSt(s) {
+  selPSt=s;
+  document.getElementById('ps-act').className='sb-'+(s==='active'?' ap':'');
+  document.getElementById('ps-don').className='sb-'+(s==='done'?' ap':'');
+}
+function submitProj() {
+  const name=document.getElementById('p-nm').value.trim();
+  if (!name) { alert('Entrez un nom de projet.'); return; }
+  S.projects.push({id:uid(),name,color:selColor,desc:document.getElementById('p-desc').value.trim(),status:selPSt});
+  save();
+  document.getElementById('ov-proj').classList.remove('show');
+  render(); goTo(1);
+}
+function toggleFilter(id) {
+  S.filter = S.filter===id ? null : id;
+  save(); render();
+}
+function toggleDone(id) {
+  const p=S.projects.find(x=>x.id===id);
+  if (p) { p.status=p.status==='done'?'active':'done'; save(); render(); }
+}
+
+// ══════════════════════════════════════════════
+// PROJECT SELECTOR
+// ══════════════════════════════════════════════
+function openProjSel() {
+  const all = [{id:null,name:'Tous les projets',color:'var(--accent)'},...S.projects];
+  document.getElementById('ps-list').innerHTML = all.map(p=>`
+    <div onclick="chooseFilter(${p.id?`'${p.id}'`:null})" style="display:flex;align-items:center;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer">
+      <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
+      <span style="font-size:15px;font-weight:500">${esc(p.name)}</span>
+      ${S.filter===p.id?'<span style="margin-left:auto;color:var(--accent);font-size:18px">&#10003;</span>':''}
+    </div>`).join('');
+  document.getElementById('ov-ps').classList.add('show');
+}
+function chooseFilter(id) {
+  S.filter=id; save(); render();
+  document.getElementById('ov-ps').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════
+// DOCS TAB
+// ══════════════════════════════════════════════
+function switchDocTab(t) {
+  curDocTab=t;
+  document.getElementById('docs-fac').style.display=t==='fac'?'':'none';
+  document.getElementById('docs-rec').style.display=t==='rec'?'':'none';
+  document.getElementById('dt-fac').className='sb-'+(t==='fac'?' ai':'');
+  document.getElementById('dt-rec').className='sb-'+(t==='rec'?' ai':'');
+}
+
+// ══════════════════════════════════════════════
+// PHOTO VIEWER
+// ══════════════════════════════════════════════
+function viewPhoto(id) {
+  const t=S.transactions.find(x=>x.id===id);
+  if (!t||!t.fileData||t.fileType==='pdf') return;
+  document.getElementById('photo-img').src=t.fileData;
+  document.getElementById('photo-ov').classList.add('show');
+}
+function closePhoto() { document.getElementById('photo-ov').classList.remove('show'); }
+
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 function closeBg(e,id) {
   if (e.target===document.getElementById(id)) document.getElementById(id).classList.remove('show');
 }
-function exportData() {
-  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
-  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-  a.download='finflow-export.json'; a.click();
+function populateProjSel() {
+  document.getElementById('tx-proj').innerHTML='<option value="">— Aucun projet —</option>'+
+    S.projects.map(p=>`<option value="${p.id}">${esc(p.name)}</option>`).join('');
 }
-function importData(input) {
-  const file=input.files[0]; if (!file) return;
+function exportJSON() {
+  const blob=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='finflow-backup.json';a.click();
+}
+function importJSON(input) {
+  const f=input.files[0];if(!f)return;
   const r=new FileReader();
-  r.onload=e=>{
-    try { S=JSON.parse(e.target.result); save(); render(); alert('Données importées !'); }
-    catch { alert('Fichier invalide.'); }
-  };
-  r.readAsText(file);
+  r.onload=e=>{try{S=JSON.parse(e.target.result);save();render();alert('Donnees importees.');}catch{alert('Fichier invalide.');}};
+  r.readAsText(f);
 }
 function clearAll() {
-  if (!confirm('Effacer TOUTES les données ? Cette action est irréversible.')) return;
-  S={projects:[],transactions:[],filter:null}; save(); render();
+  if(!confirm('Effacer TOUTES les donnees ? Irreversible.'))return;
+  S={projects:[],transactions:[],filter:null};save();render();
 }
 
-// ─── INIT ────────────────────────────────────────
+// ══════════════════════════════════════════════
+// PWA / SERVICE WORKER
+// ══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => {
+      const nw = reg.installing;
+      nw.addEventListener('statechange', () => {
+        if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+          document.getElementById('update-bar').style.display = 'block';
+        }
+      });
+    });
+  });
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
 render();
 </script>
 </body>
