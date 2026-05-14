@@ -1246,6 +1246,8 @@ function exportBilan() {
       'background:#fff','overflow-y:auto','-webkit-overflow-scrolling:touch',
       'font-family:DM Sans,sans-serif','color:#1a1a18'
     ].join(';');
+    document.body.appendChild(ov);
+  }
   ov.innerHTML = `<style>${css.replace(/@media print[\s\S]*?}/,'')}</style>${printContent}`;
   ov.style.display = 'block';
   ov.scrollTop = 0;
@@ -1496,6 +1498,8 @@ function doPrint() {
   window.addEventListener('afterprint', cleanup, {once: true});
   setTimeout(cleanup, 3000);
 }
+
+function toggleDone(id) {
   const p=S.projects.find(x=>x.id===id);
   if (p) { p.status=p.status==='done'?'active':'done'; save(); render(); }
 }
