@@ -469,11 +469,11 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent)}
 .cb-cancel{height:46px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--rsm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer}
 .cb-danger{height:46px;background:var(--red-bg);border:1px solid rgba(255,92,92,.3);border-radius:var(--rsm);color:var(--red);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer}
 
-/* Print bilan styles */
+/* Print bilan styles — only active during window.print() */
 @media print {
-  #nav,#fab-wrap,.fab-backdrop,#update-bar{display:none!important}
-  .panel{position:static!important;transform:none!important;overflow:visible!important}
-  body{background:#fff!important;color:#111!important}
+  body.bilan-printing > *:not(#finflow-print-ov) { display: none !important; }
+  #finflow-print-ov { position: static !important; overflow: visible !important; }
+  #finflow-print-ov .no-print { display: none !important; }
 }
 </style>
 </head>
@@ -1225,7 +1225,7 @@ function exportBilan() {
     <div class="no-print" style="position:sticky;top:0;background:#fff;border-bottom:1px solid #e0e0e0;padding:12px 16px;display:flex;align-items:center;gap:12px;z-index:10">
       <button onclick="document.getElementById('finflow-print-ov').style.display='none'" style="width:36px;height:36px;border-radius:18px;border:1px solid #ddd;background:#f5f5f3;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0">&#8249;</button>
       <span style="font-family:'Syne',sans-serif;font-size:16px;font-weight:700;flex:1;color:#1a1a18">Apercu du bilan</span>
-      <button onclick="window.print()" style="background:#3d6b00;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">
+      <button onclick="doPrint()" style="background:#3d6b00;color:#fff;border:none;padding:10px 18px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">
         🖨️ Imprimer / PDF
       </button>
     </div>
@@ -1246,21 +1246,6 @@ function exportBilan() {
       'background:#fff','overflow-y:auto','-webkit-overflow-scrolling:touch',
       'font-family:DM Sans,sans-serif','color:#1a1a18'
     ].join(';');
-    // Inject print-specific CSS into the main document once
-    if (!document.getElementById('bilan-print-style')) {
-      const s = document.createElement('style');
-      s.id = 'bilan-print-style';
-      s.textContent = `
-        @media print {
-          body > *:not(#finflow-print-ov) { display: none !important; }
-          #finflow-print-ov { position:static !important; overflow:visible !important; }
-          #finflow-print-ov .no-print { display:none !important; }
-          ${css}
-        }`;
-      document.head.appendChild(s);
-    }
-    document.body.appendChild(ov);
-  }
   ov.innerHTML = `<style>${css.replace(/@media print[\s\S]*?}/,'')}</style>${printContent}`;
   ov.style.display = 'block';
   ov.scrollTop = 0;
@@ -1503,7 +1488,14 @@ function toggleFilter(id) {
   S.filter = S.filter===id ? null : id;
   save(); render();
 }
-function toggleDone(id) {
+function doPrint() {
+  document.body.classList.add('bilan-printing');
+  window.print();
+  // afterprint fires when dialog closes; fallback timeout for iOS
+  const cleanup = () => document.body.classList.remove('bilan-printing');
+  window.addEventListener('afterprint', cleanup, {once: true});
+  setTimeout(cleanup, 3000);
+}
   const p=S.projects.find(x=>x.id===id);
   if (p) { p.status=p.status==='done'?'active':'done'; save(); render(); }
 }
