@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinFlow">
+<title>FinFlow — Gestion financière</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --red: #E24B4A;
+    --red-light: #FCEBEB;
+    --amber: #EF9F27;
+    --amber-light: #FAEEDA;
+    --blue: #378ADD;
+    --blue-light: #E6F1FB;
+    --bg: #F7F6F2;
+    --card: #FFFFFF;
+    --text: #1a1a18;
+    --muted: #888780;
+    --border: rgba(0,0,0,0.08);
+    --radius: 16px;
+    --radius-sm: 10px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    max-width: 430px;
+    margin: 0 auto;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--text);
+    color: #fff;
+    padding: 52px 20px 20px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .topbar-row { display: flex; justify-content: space-between; align-items: center; }
+  .app-name { font-family: 'DM Serif Display', serif; font-size: 26px; letter-spacing: -0.5px; }
+  .project-pill {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .balance-section { margin-top: 20px; }
+  .balance-label { font-size: 12px; color: rgba(255,255,255,0.55); letter-spacing: 0.08em; text-transform: uppercase; }
+  .balance-amount { font-family: 'DM Serif Display', serif; font-size: 42px; letter-spacing: -1px; margin-top: 2px; }
+  .balance-amount.neg { color: #F09595; }
+  .balance-amount.pos { color: #9FE1CB; }
+  .stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 16px; }
+  .stat-box {
+    background: rgba(255,255,255,0.08);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .stat-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .stat-dot.in { background: #9FE1CB; }
+  .stat-dot.out { background: #F09595; }
+  .stat-info { min-width: 0; }
+  .stat-label { font-size: 11px; color: rgba(255,255,255,0.5); }
+  .stat-val { font-size: 15px; font-weight: 500; color: #fff; }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 218px;
+    z-index: 90;
+  }
+  .tab {
+    flex: 1; padding: 12px 0; text-align: center;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    cursor: pointer; border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); }
+
+  /* ── CONTENT ── */
+  .content { padding: 16px; padding-bottom: 100px; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 12px;
+  }
+  .section-title { font-size: 13px; font-weight: 500; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+
+  /* ── PROJECTS ── */
+  .project-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .project-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .project-item:first-child { padding-top: 0; }
+  .project-item:active { opacity: 0.6; }
+  .project-name { font-weight: 500; font-size: 15px; }
+  .project-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .project-balance { text-align: right; }
+  .project-balance .amount { font-weight: 500; font-size: 16px; }
+  .project-balance .amount.pos { color: var(--green); }
+  .project-balance .amount.neg { color: var(--red); }
+  .project-badge {
+    font-size: 11px; padding: 2px 8px; border-radius: 20px; margin-top: 3px; display: inline-block;
+  }
+  .project-badge.pos { background: var(--green-light); color: var(--green-dark); }
+  .project-badge.neg { background: var(--red-light); color: #791F1F; }
+
+  /* ── TRANSACTIONS ── */
+  .tx-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .tx-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .tx-item:first-child { padding-top: 0; }
+  .tx-icon {
+    width: 38px; height: 38px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; flex-shrink: 0;
+  }
+  .tx-icon.in { background: var(--green-light); color: var(--green); }
+  .tx-icon.out { background: var(--red-light); color: var(--red); }
+  .tx-icon.inv { background: var(--amber-light); color: var(--amber); }
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .tx-amount { font-weight: 500; font-size: 15px; white-space: nowrap; }
+  .tx-amount.in { color: var(--green); }
+  .tx-amount.out { color: var(--red); }
+  .tx-amount.inv { color: var(--amber); }
+
+  /* ── FAB ── */
+  .fab-area {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 430px;
+    background: linear-gradient(to top, var(--bg) 65%, transparent);
+    padding: 16px 20px 34px;
+    display: flex; gap: 10px; z-index: 200;
+  }
+  .fab {
+    flex: 1; height: 52px; border: none; border-radius: 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px; font-weight: 500; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    transition: transform 0.12s, opacity 0.12s;
+  }
+  .fab:active { transform: scale(0.96); opacity: 0.85; }
+  .fab.primary { background: var(--text); color: #fff; }
+  .fab.invoice { background: var(--amber-light); color: #633806; }
+
+  /* ── MODAL ── */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 300; display: none; align-items: flex-end;
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+  }
+  .overlay.show { display: flex; }
+  .sheet {
+    background: var(--bg);
+    border-radius: 22px 22px 0 0;
+    padding: 12px 20px 40px;
+    width: 100%; max-height: 92vh; overflow-y: auto;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .sheet-handle {
+    width: 36px; height: 4px; border-radius: 2px;
+    background: rgba(0,0,0,0.15); margin: 0 auto 16px;
+  }
+  .sheet-title { font-family: 'DM Serif Display', serif; font-size: 22px; margin-bottom: 20px; }
+
+  /* ── FORM ── */
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.04em; text-transform: uppercase; }
+  .field { margin-bottom: 14px; }
+  input[type=text], input[type=number], input[type=date], select, textarea {
+    width: 100%; height: 48px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 0 14px;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; color: var(--text);
+    outline: none; appearance: none; -webkit-appearance: none;
+    transition: border-color 0.15s;
+  }
+  textarea { height: 80px; padding: 12px 14px; resize: none; }
+  input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+  .type-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 14px; }
+  .type-btn {
+    height: 44px; border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card); cursor: pointer; font-family: 'DM Sans', sans-serif;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    transition: all 0.15s;
+  }
+  .type-btn.sel-in { background: var(--green-light); color: var(--green-dark); border-color: var(--green); }
+  .type-btn.sel-out { background: var(--red-light); color: #791F1F; border-color: var(--red); }
+  .type-btn.sel-inv { background: var(--amber-light); color: #633806; border-color: var(--amber); }
+  .submit-btn {
+    width: 100%; height: 52px; border: none; border-radius: 14px;
+    background: var(--text); color: #fff;
+    font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 500;
+    cursor: pointer; margin-top: 6px; transition: opacity 0.15s;
+  }
+  .submit-btn:active { opacity: 0.8; }
+
+  /* ── PROJECT MODAL ── */
+  .color-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .color-dot {
+    width: 30px; height: 30px; border-radius: 50%; cursor: pointer;
+    border: 2px solid transparent; transition: transform 0.15s;
+  }
+  .color-dot.sel { border-color: var(--text); transform: scale(1.1); }
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 40px 20px; color: var(--muted); font-size: 14px; }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.4; }
+
+  /* ── PROJECT SELECTOR ── */
+  .proj-select-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 0; border-bottom: 1px solid var(--border); cursor: pointer;
+  }
+  .proj-select-item:last-child { border: none; }
+  .proj-color { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .proj-select-name { font-size: 15px; font-weight: 500; }
+  .proj-select-check { margin-left: auto; color: var(--green); font-size: 18px; }
+
+  /* ── INVOICE FIELDS ── */
+  #inv-fields { display: none; }
+  #inv-fields.show { display: block; }
+
+  .del-btn {
+    background: var(--red-light); color: #791F1F; border: none;
+    padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+  }
+
+  .tag-chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--blue-light); color: #0C447C;
+    border-radius: 20px; padding: 3px 10px; font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-row">
+    <div class="app-name">FinFlow</div>
+    <div class="project-pill" onclick="openProjSelector()">
+      <span id="current-proj-dot" style="width:8px;height:8px;border-radius:50%;background:#9FE1CB;flex-shrink:0;"></span>
+      <span id="current-proj-name">Tous les projets</span>
+      <span>▾</span>
+    </div>
+  </div>
+  <div class="balance-section">
+    <div class="balance-label">Solde net</div>
+    <div class="balance-amount" id="total-balance">0,00 €</div>
+    <div class="stats-row">
+      <div class="stat-box">
+        <div class="stat-dot in"></div>
+        <div class="stat-info">
+          <div class="stat-label">Entrées</div>
+          <div class="stat-val" id="total-in">0,00 €</div>
+        </div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-dot out"></div>
+        <div class="stat-info">
+          <div class="stat-label">Sorties + Fact.</div>
+          <div class="stat-val" id="total-out">0,00 €</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- NAV TABS -->
+<div class="nav-tabs">
+  <div class="tab active" onclick="showTab('transactions')">Transactions</div>
+  <div class="tab" onclick="showTab('projects')">Projets</div>
+  <div class="tab" onclick="showTab('factures')">Factures</div>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+
+  <!-- TRANSACTIONS TAB -->
+  <div id="tab-transactions">
+    <div class="card" id="tx-list-card">
+      <div class="section-header">
+        <div class="section-title">Toutes les opérations</div>
+      </div>
+      <div id="tx-list"><div class="empty"><div class="empty-icon">💸</div>Aucune transaction pour l'instant.<br>Commencez par en ajouter une.</div></div>
+    </div>
+  </div>
+
+  <!-- PROJECTS TAB -->
+  <div id="tab-projects" style="display:none">
+    <div class="card" id="proj-list-card">
+      <div class="section-header">
+        <div class="section-title">Mes projets</div>
+        <button style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--text)" onclick="openAddProject()">+</button>
+      </div>
+      <div id="proj-list"><div class="empty"><div class="empty-icon">📁</div>Aucun projet créé.<br>Ajoutez votre premier projet.</div></div>
+    </div>
+  </div>
+
+  <!-- FACTURES TAB -->
+  <div id="tab-factures" style="display:none">
+    <div class="card" id="inv-list-card">
+      <div class="section-header">
+        <div class="section-title">Factures</div>
+      </div>
+      <div id="inv-list"><div class="empty"><div class="empty-icon">🧾</div>Aucune facture enregistrée.</div></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FAB -->
+<div class="fab-area">
+  <button class="fab invoice" onclick="openAddTransaction('invoice')">🧾 Facture</button>
+  <button class="fab primary" onclick="openAddTransaction('tx')">+ Transaction</button>
+</div>
+
+<!-- ══ OVERLAY: ADD TRANSACTION ══ -->
+<div class="overlay" id="overlay-tx" onclick="closeOnBg(event,'overlay-tx')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title" id="modal-tx-title">Nouvelle transaction</div>
+
+    <div class="field">
+      <label>Type</label>
+      <div class="type-toggle">
+        <button class="type-btn sel-in" id="btn-in" onclick="setType('in')">↑ Entrée</button>
+        <button class="type-btn" id="btn-out" onclick="setType('out')">↓ Sortie</button>
+        <button class="type-btn" id="btn-inv" onclick="setType('invoice')">🧾 Facture</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Description</label>
+      <input type="text" id="tx-desc" placeholder="Ex: Paiement client, Achat matériel…">
+    </div>
+
+    <div class="field">
+      <label>Montant (€)</label>
+      <input type="number" id="tx-amount" placeholder="0.00" step="0.01" min="0">
+    </div>
+
+    <div class="field">
+      <label>Projet</label>
+      <select id="tx-project">
+        <option value="">— Aucun projet —</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Date</label>
+      <input type="date" id="tx-date">
+    </div>
+
+    <!-- INVOICE EXTRA FIELDS -->
+    <div id="inv-fields">
+      <div class="field">
+        <label>N° Facture</label>
+        <input type="text" id="inv-num" placeholder="FAC-2024-001">
+      </div>
+      <div class="field">
+        <label>Client / Fournisseur</label>
+        <input type="text" id="inv-client" placeholder="Nom de l'entreprise ou personne">
+      </div>
+      <div class="field">
+        <label>Échéance</label>
+        <input type="date" id="inv-due">
+      </div>
+      <div class="field">
+        <label>Statut</label>
+        <select id="inv-status">
+          <option value="pending">En attente</option>
+          <option value="paid">Payée</option>
+          <option value="overdue">En retard</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Notes</label>
+        <textarea id="inv-notes" placeholder="Détails, conditions, remarques…"></textarea>
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-tx-btn" onclick="submitTransaction()">Enregistrer</button>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: ADD PROJECT ══ -->
+<div class="overlay" id="overlay-proj" onclick="closeOnBg(event,'overlay-proj')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Nouveau projet</div>
+    <div class="field">
+      <label>Nom du projet</label>
+      <input type="text" id="proj-name" placeholder="Ex: Rénovation maison, Client ACME…">
+    </div>
+    <div class="field">
+      <label>Couleur</label>
+      <div class="color-row" id="color-row"></div>
+    </div>
+    <div class="field">
+      <label>Description (optionnel)</label>
+      <textarea id="proj-desc" placeholder="Quelques mots sur ce projet…"></textarea>
+    </div>
+    <button class="submit-btn" onclick="submitProject()">Créer le projet</button>
+  </div>
+</div>
+
+<!-- ══ OVERLAY: PROJECT SELECTOR ══ -->
+<div class="overlay" id="overlay-ps" onclick="closeOnBg(event,'overlay-ps')">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">Choisir un projet</div>
+    <div id="ps-list"></div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let state = JSON.parse(localStorage.getItem('finflow') || 'null') || {
+  projects: [],
+  transactions: [],
+  currentProject: null
+};
+
+const COLORS = ['#1D9E75','#378ADD','#E24B4A','#EF9F27','#7F77DD','#D4537E','#639922','#D85A30'];
+let selectedColor = COLORS[0];
+let selectedType = 'in';
+let editingTx = null;
+let activeTab = 'transactions';
+
+function save() { localStorage.setItem('finflow', JSON.stringify(state)); }
+
+function fmt(n) {
+  return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(n);
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+}
+
+// ── TABS ──
+function showTab(t) {
+  activeTab = t;
+  ['transactions','projects','factures'].forEach(x => {
+    document.getElementById('tab-'+x).style.display = x === t ? '' : 'none';
+  });
+  document.querySelectorAll('.tab').forEach((el, i) => {
+    el.classList.toggle('active', ['transactions','projects','factures'][i] === t);
+  });
+  render();
+}
+
+// ── RENDER ──
+function render() {
+  renderHeader();
+  renderTransactions();
+  renderProjects();
+  renderInvoices();
+  populateProjectSelect();
+}
+
+function filterByProject(items) {
+  if (!state.currentProject) return items;
+  return items.filter(t => t.project === state.currentProject);
+}
+
+function renderHeader() {
+  const txs = filterByProject(state.transactions);
+  const totalIn = txs.filter(t => t.type === 'in').reduce((s, t) => s + t.amount, 0);
+  const totalOut = txs.filter(t => t.type !== 'in').reduce((s, t) => s + t.amount, 0);
+  const bal = totalIn - totalOut;
+
+  const balEl = document.getElementById('total-balance');
+  balEl.textContent = fmt(bal);
+  balEl.className = 'balance-amount' + (bal >= 0 ? ' pos' : ' neg');
+  document.getElementById('total-in').textContent = fmt(totalIn);
+  document.getElementById('total-out').textContent = fmt(totalOut);
+
+  const cp = state.currentProject;
+  const proj = state.projects.find(p => p.id === cp);
+  document.getElementById('current-proj-name').textContent = proj ? proj.name : 'Tous les projets';
+  document.getElementById('current-proj-dot').style.background = proj ? proj.color : '#9FE1CB';
+}
+
+function renderTransactions() {
+  const el = document.getElementById('tx-list');
+  let txs = filterByProject(state.transactions).filter(t => t.type !== 'invoice');
+  txs = txs.slice().reverse();
+  if (!txs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">💸</div>Aucune transaction.<br>Ajoutez votre première entrée ou sortie.</div>'; return; }
+  el.innerHTML = txs.map(t => txCard(t)).join('');
+}
+
+function renderInvoices() {
+  const el = document.getElementById('inv-list');
+  let invs = filterByProject(state.transactions).filter(t => t.type === 'invoice');
+  invs = invs.slice().reverse();
+  if (!invs.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">🧾</div>Aucune facture enregistrée.</div>'; return; }
+  el.innerHTML = invs.map(t => invoiceCard(t)).join('');
+}
+
+function txCard(t) {
+  const proj = state.projects.find(p => p.id === t.project);
+  const typeLabel = t.type === 'in' ? 'in' : 'out';
+  const icon = t.type === 'in' ? '↑' : '↓';
+  const sign = t.type === 'in' ? '+' : '−';
+  const projBadge = proj ? `<span class="tag-chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
+  return `<div class="tx-item">
+    <div class="tx-icon ${typeLabel}">${icon}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.desc || 'Sans titre'}</div>
+      <div class="tx-meta">${fmtDate(t.date)} ${projBadge}</div>
+    </div>
+    <div>
+      <div class="tx-amount ${typeLabel}">${sign}${fmt(t.amount)}</div>
+      <div style="text-align:right;margin-top:4px">
+        <button class="del-btn" onclick="deleteTx('${t.id}')">Suppr.</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function invoiceCard(t) {
+  const proj = state.projects.find(p => p.id === t.project);
+  const statusColor = t.invStatus === 'paid' ? 'var(--green)' : t.invStatus === 'overdue' ? 'var(--red)' : 'var(--amber)';
+  const statusBg = t.invStatus === 'paid' ? 'var(--green-light)' : t.invStatus === 'overdue' ? 'var(--red-light)' : 'var(--amber-light)';
+  const statusLabel = t.invStatus === 'paid' ? 'Payée' : t.invStatus === 'overdue' ? 'En retard' : 'En attente';
+  const projBadge = proj ? `<span class="tag-chip" style="background:${proj.color}22;color:${proj.color}">${proj.name}</span>` : '';
+  return `<div class="tx-item">
+    <div class="tx-icon inv">🧾</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.invNum ? t.invNum + ' — ' : ''}${t.invClient || t.desc || 'Sans titre'}</div>
+      <div class="tx-meta">${fmtDate(t.date)} · Éch. ${fmtDate(t.invDue)} ${projBadge}</div>
+      <div style="margin-top:4px"><span style="background:${statusBg};color:${statusColor};font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500">${statusLabel}</span></div>
+    </div>
+    <div style="text-align:right">
+      <div class="tx-amount inv">${fmt(t.amount)}</div>
+      <div style="margin-top:6px;display:flex;gap:6px;justify-content:flex-end">
+        ${t.invStatus !== 'paid' ? `<button class="del-btn" style="background:var(--green-light);color:var(--green-dark)" onclick="markPaid('${t.id}')">Payée</button>` : ''}
+        <button class="del-btn" onclick="deleteTx('${t.id}')">Suppr.</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderProjects() {
+  const el = document.getElementById('proj-list');
+  if (!state.projects.length) { el.innerHTML = '<div class="empty"><div class="empty-icon">📁</div>Aucun projet.<br>Créez votre premier projet.</div>'; return; }
+  el.innerHTML = state.projects.map(p => {
+    const txs = state.transactions.filter(t => t.project === p.id);
+    const totalIn = txs.filter(t => t.type === 'in').reduce((s, t) => s + t.amount, 0);
+    const totalOut = txs.filter(t => t.type !== 'in').reduce((s, t) => s + t.amount, 0);
+    const bal = totalIn - totalOut;
+    const pos = bal >= 0;
+    return `<div class="project-item" onclick="selectProject('${p.id}')">
+      <div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="width:10px;height:10px;border-radius:50%;background:${p.color};flex-shrink:0"></span>
+          <div class="project-name">${p.name}</div>
+        </div>
+        <div class="project-sub">${txs.length} opération${txs.length !== 1 ? 's' : ''} · Ent. ${fmt(totalIn)}</div>
+      </div>
+      <div class="project-balance">
+        <div class="amount ${pos ? 'pos' : 'neg'}">${fmt(bal)}</div>
+        <div><span class="project-badge ${pos ? 'pos' : 'neg'}">${pos ? '▲' : '▼'} solde</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── ACTIONS ──
+function deleteTx(id) {
+  if (!confirm('Supprimer cette opération ?')) return;
+  state.transactions = state.transactions.filter(t => t.id !== id);
+  save(); render();
+}
+
+function markPaid(id) {
+  const t = state.transactions.find(t => t.id === id);
+  if (t) { t.invStatus = 'paid'; save(); render(); }
+}
+
+function selectProject(id) {
+  state.currentProject = state.currentProject === id ? null : id;
+  save(); render();
+}
+
+// ── PROJECT MODAL ──
+function openAddProject() {
+  const cr = document.getElementById('color-row');
+  cr.innerHTML = COLORS.map(c => `<div class="color-dot${c === selectedColor ? ' sel' : ''}" style="background:${c}" onclick="pickColor('${c}',this)"></div>`).join('');
+  selectedColor = COLORS[0];
+  document.getElementById('proj-name').value = '';
+  document.getElementById('proj-desc').value = '';
+  document.getElementById('overlay-proj').classList.add('show');
+}
+
+function pickColor(c, el) {
+  selectedColor = c;
+  document.querySelectorAll('.color-dot').forEach(d => d.classList.remove('sel'));
+  el.classList.add('sel');
+}
+
+function submitProject() {
+  const name = document.getElementById('proj-name').value.trim();
+  if (!name) { alert('Veuillez entrer un nom de projet.'); return; }
+  state.projects.push({ id: Date.now().toString(), name, color: selectedColor, desc: document.getElementById('proj-desc').value.trim() });
+  save();
+  document.getElementById('overlay-proj').classList.remove('show');
+  render();
+}
+
+// ── TX MODAL ──
+function openAddTransaction(mode) {
+  editingTx = null;
+  document.getElementById('tx-desc').value = '';
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('inv-num').value = '';
+  document.getElementById('inv-client').value = '';
+  document.getElementById('inv-due').value = '';
+  document.getElementById('inv-notes').value = '';
+  document.getElementById('inv-status').value = 'pending';
+  setType(mode === 'invoice' ? 'invoice' : 'in');
+  document.getElementById('modal-tx-title').textContent = mode === 'invoice' ? 'Nouvelle facture' : 'Nouvelle transaction';
+  document.getElementById('overlay-tx').classList.add('show');
+}
+
+function setType(t) {
+  selectedType = t;
+  ['in','out','inv'].forEach(x => {
+    document.getElementById('btn-' + (x === 'inv' ? 'inv' : x)).className = 'type-btn';
+  });
+  const sel = t === 'in' ? 'sel-in' : t === 'out' ? 'sel-out' : 'sel-inv';
+  const btn = t === 'invoice' ? 'btn-inv' : 'btn-' + t;
+  document.getElementById(btn).className = 'type-btn ' + sel;
+  document.getElementById('inv-fields').className = t === 'invoice' ? 'show' : '';
+}
+
+function submitTransaction() {
+  const desc = document.getElementById('tx-desc').value.trim();
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  if (!desc) { alert('Veuillez entrer une description.'); return; }
+  if (!amount || amount <= 0) { alert('Veuillez entrer un montant valide.'); return; }
+
+  const tx = {
+    id: Date.now().toString(),
+    type: selectedType,
+    desc, amount,
+    project: document.getElementById('tx-project').value || null,
+    date: document.getElementById('tx-date').value,
+    invNum: document.getElementById('inv-num').value.trim(),
+    invClient: document.getElementById('inv-client').value.trim(),
+    invDue: document.getElementById('inv-due').value,
+    invStatus: document.getElementById('inv-status').value,
+    invNotes: document.getElementById('inv-notes').value.trim(),
+  };
+  state.transactions.push(tx);
+  save();
+  document.getElementById('overlay-tx').classList.remove('show');
+  // Switch to right tab
+  if (selectedType === 'invoice') showTab('factures');
+  else showTab('transactions');
+  render();
+}
+
+// ── PROJECT SELECTOR ──
+function openProjSelector() {
+  const el = document.getElementById('ps-list');
+  const all = [{ id: null, name: 'Tous les projets', color: '#9FE1CB' }, ...state.projects];
+  el.innerHTML = all.map(p => `
+    <div class="proj-select-item" onclick="chooseProject(${p.id ? "'" + p.id + "'" : null})">
+      <span class="proj-color" style="background:${p.color}"></span>
+      <span class="proj-select-name">${p.name}</span>
+      ${state.currentProject === p.id ? '<span class="proj-select-check">✓</span>' : ''}
+    </div>`).join('');
+  document.getElementById('overlay-ps').classList.add('show');
+}
+
+function chooseProject(id) {
+  state.currentProject = id;
+  save();
+  document.getElementById('overlay-ps').classList.remove('show');
+  render();
+}
+
+function populateProjectSelect() {
+  const sel = document.getElementById('tx-project');
+  sel.innerHTML = '<option value="">— Aucun projet —</option>' +
+    state.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+function closeOnBg(e, id) {
+  if (e.target === document.getElementById(id)) document.getElementById(id).classList.remove('show');
+}
+
+// ── INIT ──
+render();
+</script>
+</body>
+</html>
